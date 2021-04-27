@@ -10,6 +10,7 @@ from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 from stable_baselines3.common.vec_env import SubprocVecEnv
 import highway_env
+import os
 
 # ==================================
 #        Policy Architecture
@@ -275,7 +276,7 @@ def make_configure_env(**kwargs):
 
 
 env_kwargs = {
-    'id': 'highway-v0',
+    'id': 'merge-v0',
     'config': {
         "lanes_count": 3,
         "vehicles_count": 15,
@@ -295,7 +296,7 @@ env_kwargs = {
         },
         "policy_frequency": 2,
         "duration": 40,
-    }
+   }
 }
 
 
@@ -318,15 +319,15 @@ if __name__ == "__main__":
                     learning_rate=2e-3,
                     policy_kwargs=policy_kwargs,
                     verbose=2,
-                    tensorboard_log="./highway_attention_ppo/")
+                    tensorboard_log="./merge_attention_ppo/")
         # Train the agent
         model.learn(total_timesteps=200*1000)
         # Save the agent
-        model.save("ppo-highway")
+        model.save("ppo-merge")
 
-    model = PPO.load("ppo-highway")
+    model = PPO.load("ppo-merge")
     env = make_configure_env(**env_kwargs)
-    for _ in range(5):
+    for _ in range(50):
         obs = env.reset()
         done = False
         while not done:
