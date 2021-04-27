@@ -103,8 +103,7 @@ class MergeEnv(AbstractEnv):
         """
         road = self.road
         ego_vehicle = self.action_type.vehicle_class(road,
-                                                     road.network.get_lane(("a", "b", 1)).position(30, 0),
-                                                     speed=30)
+                                                     road.network.get_lane(("j", "k", 0)).position(110, 0), speed=20)
         road.vehicles.append(ego_vehicle)
 
         other_vehicles_type = utils.class_from_path(self.config["other_vehicles_type"])
@@ -112,11 +111,10 @@ class MergeEnv(AbstractEnv):
         road.vehicles.append(other_vehicles_type(road, road.network.get_lane(("a", "b", 1)).position(70, 0), speed=31))
         road.vehicles.append(other_vehicles_type(road, road.network.get_lane(("a", "b", 0)).position(5, 0), speed=31.5))
 
-        merging_v = other_vehicles_type(road, road.network.get_lane(("j", "k", 0)).position(110, 0), speed=20)
-        merging_v.target_speed = 30
-        road.vehicles.append(merging_v)
+        #merging_v = other_vehicles_type(road, road.network.get_lane(("j", "k", 0)).position(110, 0), speed=20)
+        #merging_v.target_speed = 30
+        #road.vehicles.append(merging_v)
         self.vehicle = ego_vehicle
-
 
 register(
     id='merge-v0',
