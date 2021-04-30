@@ -7,6 +7,7 @@ from highway_env.road.lane import LineType, StraightLane, SineLane
 from highway_env.road.road import Road, RoadNetwork
 from highway_env.vehicle.controller import ControlledVehicle
 from highway_env.vehicle.objects import Obstacle
+from highway_env.utils import near_split
 
 
 class MergeEnv(AbstractEnv):
@@ -56,11 +57,46 @@ class MergeEnv(AbstractEnv):
 
     def _is_terminal(self) -> bool:
         """The episode is over when a collision occurs or when the access ramp has been passed."""
-        return self.vehicle.crashed or self.vehicle.position[0] > 370
+        return self.vehicle.crashed or self.vehicle.position[0] > 320
 
     def _reset(self) -> None:
+        #high_speed
+        vehicles_density=np.random.uniform(0.6,1.5)
+        avg_speed = 30.
+        if np.random.random()<0.5:#low_speed
+            vehicles_density=np.random.uniform(0.5,1.)
+            avg_speed = 15.
+        self.config.update({"vehicles_density": vehicles_density,})
+        self.config.update({"avg_speed": avg_speed,})
+
         self._make_road()
         self._make_vehicles()
+
+    @classmethod
+    def default_config(cls) -> dict:
+        config = super().default_config()
+        config.update({
+            "vehicles_density": 1,
+            "observation": {
+                "type": "Kinematics",
+                "vehicles_count": 15,
+                "features": ["presence", "x", "y", "vx", "vy", "cos_h", "sin_h"],
+                "features_range": {
+                    "x": [-100, 100],
+                    "y": [-100, 100],
+                    "vx": [-20, 20],
+                    "vy": [-20, 20]
+                },
+                "absolute": False,
+                "normalize":False,
+                "order": "sorted"
+            },
+            "vehicles_count":20,
+            "policy_frequency": 2,
+            "duration": 40,
+            'real_time_rendering': True,
+        })
+        return config
 
     def _make_road(self) -> None:
         """
@@ -102,18 +138,40 @@ class MergeEnv(AbstractEnv):
         :return: the ego-vehicle
         """
         road = self.road
-        ego_vehicle = self.action_type.vehicle_class(road,
-                                                     road.network.get_lane(("j", "k", 0)).position(110, 0), speed=20)
-        road.vehicles.append(ego_vehicle)
+
 
         other_vehicles_type = utils.class_from_path(self.config["other_vehicles_type"])
-        road.vehicles.append(other_vehicles_type(road, road.network.get_lane(("a", "b", 0)).position(90, 0), speed=29))
-        road.vehicles.append(other_vehicles_type(road, road.network.get_lane(("a", "b", 1)).position(70, 0), speed=31))
-        road.vehicles.append(other_vehicles_type(road, road.network.get_lane(("a", "b", 0)).position(5, 0), speed=31.5))
+        print(self.config["other_vehicles_type"])
+        # road.vehicles.append(other_vehicles_type(road, road.network.get_lane(("a", "b", 0)).position(90, 0), speed=29))
+        # road.vehicles.append(other_vehicles_type(road, road.network.get_lane(("a", "b", 1)).position(70, 0), speed=31))
+        # road.vehicles.append(other_vehicles_type(road, road.network.get_lane(("a", "b", 0)).position(5, 0), speed=31.5))
+        ego_vehicle = self.action_type.vehicle_class(road,
+                                                     road.network.get_lane(("j", "k", 0)).position(140, 0), speed=30)
+        for _ in range(self.config["vehicles_count"]):
 
-        #merging_v = other_vehicles_type(road, road.network.get_lane(("j", "k", 0)).position(110, 0), speed=20)
-        #merging_v.target_speed = 30
-        #road.vehicles.append(merging_v)
+            lanes = np.arange(2)
+            lane_id = self.road.np_random.choice(lanes, size=1).astype(int)[0]
+            lane = self.road.network.get_lane(("a", "b", lane_id))
+            speed=np.random.normal(self.config["avg_speed"], 3.)
+            speed=min(speed, lane.speed_limit)
+            new_vehicle = other_vehicles_type.create_random(self.road,
+                                                  lane_from="a",
+                                                  lane_to="b",
+                                                  lane_id=lane_id,
+                                                  speed=speed,
+                                                  spacing=1 / self.config["vehicles_density"],
+                                                  ).plan_route_to("d")
+
+
+            #
+            #new_vehicle = other_vehicles_type.create_random(self.road, spacing=1 / self.config["vehicles_density"],
+            #                                                speed=speed)
+            new_vehicle.enable_lane_change = np.random.random()<0.5
+            self.road.vehicles.append(new_vehicle)
+
+        #IMPORTANT: Ego vehicle should be added after others!
+        road.vehicles.append(ego_vehicle)
+
         self.vehicle = ego_vehicle
 
 register(
