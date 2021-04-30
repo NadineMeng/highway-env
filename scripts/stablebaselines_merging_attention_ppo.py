@@ -278,25 +278,7 @@ def make_configure_env(**kwargs):
 env_kwargs = {
     'id': 'merge-v0',
     'config': {
-        "lanes_count": 3,
-        "vehicles_count": 15,
-        "observation": {
-            "type": "Kinematics",
-            "vehicles_count": 10,
-            "features": [
-                "presence",
-                "x",
-                "y",
-                "vx",
-                "vy",
-                "cos_h",
-                "sin_h"
-            ],
-            "absolute": False
-        },
-        "policy_frequency": 2,
-        "duration": 40,
-   }
+    }#use default config in the environment
 }
 
 

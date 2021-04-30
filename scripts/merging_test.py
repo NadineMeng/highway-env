@@ -298,10 +298,11 @@ if __name__ == "__main__":
         action = env.action_type.actions_indexes["IDLE"]
         if obs is not None:
             ego_x = obs[0][1]
-            if ego_x>CUTIN_X and CUTIN is False:
-                action = env.action_type.actions_indexes["LANE_LEFT"]
-                CUTIN=True
+            #if ego_x>CUTIN_X and CUTIN is False:
+                #action = env.action_type.actions_indexes["LANE_LEFT"]
+                #CUTIN=True
         obs, reward, done, info = env.step(action)
+        print(obs)
         env.render()
         #plt.imshow(env.render(mode="rgb_array"))
         #plt.show()
