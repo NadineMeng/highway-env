@@ -215,8 +215,10 @@ class AbstractEnv(gym.Env):
 
         self.steps += 1
         self._simulate(action)
-
         obs = self.observation_type.observe()
+        #ego_v = np.sqrt(obs[0][4]*obs[0][4] + obs[0][3]*obs[0][3])
+        #print("ego_v {}".format(ego_v))
+
         reward = self._reward(action)
         terminal = self._is_terminal()
         info = self._info(obs, action)
