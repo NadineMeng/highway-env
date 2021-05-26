@@ -89,6 +89,7 @@ class ControlledVehicle(Vehicle):
             self.target_speed += self.DELTA_SPEED
         elif action == "SLOWER":
             self.target_speed -= self.DELTA_SPEED
+
         elif action == "LANE_RIGHT":
             _from, _to, _id = self.target_lane_index
             target_lane_index = _from, _to, np.clip(_id + 1, 0, len(self.road.network.graph[_from][_to]) - 1)
@@ -99,7 +100,6 @@ class ControlledVehicle(Vehicle):
             target_lane_index = _from, _to, np.clip(_id - 1, 0, len(self.road.network.graph[_from][_to]) - 1)
             if self.road.network.get_lane(target_lane_index).is_reachable_from(self.position):
                 self.target_lane_index = target_lane_index
-
         action = {"steering": self.steering_control(self.target_lane_index),
                   "acceleration": self.speed_control(self.target_speed)}
         action['steering'] = np.clip(action['steering'], -self.MAX_STEERING_ANGLE, self.MAX_STEERING_ANGLE)
@@ -204,8 +204,8 @@ class MDPVehicle(ControlledVehicle):
 
     """A controlled vehicle with a specified discrete range of allowed target speeds."""
 
-    SPEED_COUNT: int = 3  # []
-    SPEED_MIN: float = 20  # [m/s]
+    SPEED_COUNT: int = 6  # []
+    SPEED_MIN: float = 0  # [m/s]
     SPEED_MAX: float = 30  # [m/s]
 
     def __init__(self,
@@ -229,6 +229,7 @@ class MDPVehicle(ControlledVehicle):
 
         :param action: a high-level action
         """
+
         if action == "FASTER":
             self.speed_index = self.speed_to_index(self.speed) + 1
         elif action == "SLOWER":
