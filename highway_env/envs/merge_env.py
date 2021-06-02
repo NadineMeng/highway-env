@@ -26,6 +26,11 @@ class MergeEnv(AbstractEnv):
     MERGING_SPEED_REWARD: float = -0.5
     LANE_CHANGE_REWARD: float = -0.05
 
+    def _cost(self, action: int) -> float:
+        cost = 0.
+        if self.vehicle.crashed:
+            cost = 1.
+        return cost
     def _reward(self, action: int) -> float:
         """
         The vehicle is rewarded for driving with high speed on lanes to the right and avoiding collisions
@@ -55,10 +60,10 @@ class MergeEnv(AbstractEnv):
         #                     self.HIGH_SPEED_REWARD + self.RIGHT_LANE_REWARD],
         #                   [0, 1])
         r = 0.
-        if self.vehicle.crashed:
-            r = self.COLLISION_REWARD
+        # if self.vehicle.crashed:
+        #     r = self.COLLISION_REWARD
         if self.vehicle.position[0] > 320:
-            r = self.SUCCESS_REWARD
+            r = 1.
         #print("Reward: {}".format(r))
         return r
 
@@ -109,7 +114,7 @@ class MergeEnv(AbstractEnv):
             },
             "vehicles_count":20,
             "policy_frequency": 2,
-            "duration": 40,
+            "duration": 70,
             'real_time_rendering': False,
         })
         return config
