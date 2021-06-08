@@ -218,7 +218,7 @@ register(
 )
 
 register(
-    id='mergemix-v0',
+    id='mergemixed-v0',
     entry_point='highway_env.envs:MergeEnv',
     kwargs={'avg_speed' : -1},
 )
