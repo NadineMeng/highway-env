@@ -182,7 +182,7 @@ class MergeEnv(AbstractEnv):
             lane_id = self.road.np_random.choice(lanes, size=1).astype(int)[0]
             lane = self.road.network.get_lane(("a", "b", lane_id))
             speed=np.random.normal(self.config["avg_speed"], 3.)
-            speed=min(speed, lane.speed_limit)
+            speed=np.clip(speed, 5., lane.speed_limit)
             new_vehicle = other_vehicles_type.create_random(self.road,
                                                   lane_from="a",
                                                   lane_to="b",
@@ -211,5 +211,5 @@ register(
 register(
     id='mergeslow-v0',
     entry_point='highway_env.envs:MergeEnv',
-    kwargs={'avg_speed' : 10, 'min_density' : 0.5, 'max_density' : 1.0},
+    kwargs={'avg_speed' : 10, 'min_density' : 0.3, 'max_density' : 0.6},
 )
