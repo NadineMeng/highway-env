@@ -26,7 +26,7 @@ class MergeEnv(AbstractEnv):
     MERGING_SPEED_REWARD: float = -0.5
     LANE_CHANGE_REWARD: float = -0.05
 
-    def __init__(self, avg_speed, min_density, max_density):
+    def __init__(self, avg_speed=-1, min_density=0., max_density=1.):
         self.avg_speed = avg_speed
         self.min_density = min_density,
         self.max_density = max_density
@@ -82,14 +82,17 @@ class MergeEnv(AbstractEnv):
 
     def _reset(self) -> None:
         # #high_speed
-        # vehicles_density=np.random.uniform(0.6,1.5)
-        # avg_speed = 30.
-        # if np.random.random()<0.5:#low_speed
-        #     vehicles_density=np.random.uniform(0.5,1.)
-        #     avg_speed = 15.
-        vehicles_density=np.random.uniform(self.min_density, self.max_density)
+        if self.avg_speed == -1:
+            avg_speed = 30.
+            vehicles_density=np.random.uniform(0.6,1.5)
+            if np.random.random()<0.5:#by 50 percent switch to low_speed config
+                avg_speed = 10.
+                vehicles_density=np.random.uniform(0.3,0.6)
+        else:
+            avg_speed = self.avg_speed
+            vehicles_density=np.random.uniform(self.min_density, self.max_density)
         self.config.update({"vehicles_density": vehicles_density,})
-        self.config.update({"avg_speed": self.avg_speed,})
+        self.config.update({"avg_speed": avg_speed,})
 
         self._make_road()
         self._make_vehicles()
@@ -212,4 +215,10 @@ register(
     id='mergeslow-v0',
     entry_point='highway_env.envs:MergeEnv',
     kwargs={'avg_speed' : 10, 'min_density' : 0.3, 'max_density' : 0.6},
+)
+
+register(
+    id='mergemix-v0',
+    entry_point='highway_env.envs:MergeEnv',
+    kwargs={'avg_speed' : -1},
 )
