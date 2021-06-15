@@ -261,7 +261,11 @@ class OccupancyGridObservation(ObservationType):
         self.absolute = absolute
 
     def space(self) -> spaces.Space:
-        return spaces.Box(shape=self.grid.shape, low=-1, high=1, dtype=np.float32)
+        #Change space to make it 2D (a vector of all features)
+        temp = np.transpose(self.grid)
+        temp = temp.reshape(-1,temp.shape[-1])
+
+        return spaces.Box(shape=temp.shape, low=-1, high=1, dtype=np.float32)
 
     def normalize(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -308,6 +312,9 @@ class OccupancyGridObservation(ObservationType):
                         self.grid[layer, cell[1], cell[0]] = vehicle[feature]
             # Clip
             obs = np.clip(self.grid, -1, 1)
+            #Change space to make it 2D
+            obs = np.transpose(obs)
+            obs = obs.reshape(-1,obs.shape[-1])
             return obs
 
 

@@ -37,6 +37,8 @@ class MergeEnv(AbstractEnv):
         if self.vehicle.crashed:
             cost = 1.
         return cost
+
+
     def _reward(self, action: int) -> float:
         """
         The vehicle is rewarded for driving with high speed on lanes to the right and avoiding collisions
@@ -102,20 +104,38 @@ class MergeEnv(AbstractEnv):
         config = super().default_config()
         config.update({
             "vehicles_density": 1,
+
+
             "observation": {
-                "type": "Kinematics",
+                "type": "OccupancyGrid",
                 "vehicles_count": 15,
                 "features": ["presence", "x", "y", "vx", "vy", "cos_h", "sin_h"],
                 "features_range": {
                     "x": [-100, 100],
                     "y": [-100, 100],
-                    "vx": [-40, 40],
-                    "vy": [-40, 40]
+                    "vx": [-20, 20],
+                    "vy": [-20, 20]
                 },
-                "absolute": False,
-                "normalize":True,
-                "order": "sorted"
+                "grid_size": [[-27.5, 27.5], [-27.5, 27.5]],
+                "grid_step": [5, 5],
+                "absolute": False
             },
+
+
+            # "observation": {
+            #     "type": "Kinematics",
+            #     "vehicles_count": 15,
+            #     "features": ["presence", "x", "y", "vx", "vy", "cos_h", "sin_h"],
+            #     "features_range": {
+            #         "x": [-100, 100],
+            #         "y": [-100, 100],
+            #         "vx": [-40, 40],
+            #         "vy": [-40, 40]
+            #     },
+            #     "absolute": False,
+            #     "normalize":True,
+            #     "order": "sorted"
+            # },
             "action": {
                 "type": "DiscreteMetaAction",
                 "longitudinal": True,
