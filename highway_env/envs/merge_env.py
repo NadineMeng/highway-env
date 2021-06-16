@@ -31,7 +31,7 @@ class MergeEnv(AbstractEnv):
         self.min_density = min_density,
         self.max_density = max_density
         self.config = self.default_config()
-        if observation is "GRID":
+        if observation == "GRID":
             self.config.update({
                 "observation": {
                     "type": "OccupancyGrid",
@@ -47,7 +47,7 @@ class MergeEnv(AbstractEnv):
                     "grid_step": [5, 5],
                     "absolute": False
                 }})
-        elif observation is "LIST":
+        elif observation == "LIST":
             self.config.update({
                 "observation": {
                     "type": "Kinematics",
@@ -64,7 +64,7 @@ class MergeEnv(AbstractEnv):
                     "order": "sorted"
                 }})
         else:
-            raise ValueError('Observation not implemented')
+            raise ValueError('Observation {} not implemented'.format(observation))
         super().__init__(self.config)
 
     def _cost(self, action: int) -> float:
