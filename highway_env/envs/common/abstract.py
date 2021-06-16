@@ -39,7 +39,6 @@ class AbstractEnv(gym.Env):
 
     def __init__(self, config: dict = None) -> None:
         # Configuration
-        self.config = self.default_config()
         self.configure(config)
 
         # Seeding

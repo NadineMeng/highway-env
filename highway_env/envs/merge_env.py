@@ -26,11 +26,46 @@ class MergeEnv(AbstractEnv):
     MERGING_SPEED_REWARD: float = -0.5
     LANE_CHANGE_REWARD: float = -0.05
 
-    def __init__(self, avg_speed=-1, min_density=0., max_density=1.):
+    def __init__(self, avg_speed=-1, min_density=0., max_density=1., observation="LIST"):
         self.avg_speed = avg_speed
         self.min_density = min_density,
         self.max_density = max_density
-        super().__init__()
+        self.config = self.default_config()
+        if observation is "GRID":
+            self.config.update({
+                "observation": {
+                    "type": "OccupancyGrid",
+                    "vehicles_count": 15,
+                    "features": ["presence", "x", "y", "vx", "vy", "cos_h", "sin_h"],
+                    "features_range": {
+                        "x": [-100, 100],
+                        "y": [-100, 100],
+                        "vx": [-20, 20],
+                        "vy": [-20, 20]
+                    },
+                    "grid_size": [[-27.5, 27.5], [-27.5, 27.5]],
+                    "grid_step": [5, 5],
+                    "absolute": False
+                }})
+        elif observation is "LIST":
+            self.config.update({
+                "observation": {
+                    "type": "Kinematics",
+                    "vehicles_count": 15,
+                    "features": ["presence", "x", "y", "vx", "vy", "cos_h", "sin_h"],
+                    "features_range": {
+                        "x": [-100, 100],
+                        "y": [-100, 100],
+                        "vx": [-40, 40],
+                        "vy": [-40, 40]
+                    },
+                    "absolute": False,
+                    "normalize":True,
+                    "order": "sorted"
+                }})
+        else:
+            raise ValueError('Observation not implemented')
+        super().__init__(self.config)
 
     def _cost(self, action: int) -> float:
         cost = 0.
@@ -101,41 +136,10 @@ class MergeEnv(AbstractEnv):
 
     @classmethod
     def default_config(cls) -> dict:
+        print("default config")
         config = super().default_config()
         config.update({
             "vehicles_density": 1,
-
-
-            "observation": {
-                "type": "OccupancyGrid",
-                "vehicles_count": 15,
-                "features": ["presence", "x", "y", "vx", "vy", "cos_h", "sin_h"],
-                "features_range": {
-                    "x": [-100, 100],
-                    "y": [-100, 100],
-                    "vx": [-20, 20],
-                    "vy": [-20, 20]
-                },
-                "grid_size": [[-27.5, 27.5], [-27.5, 27.5]],
-                "grid_step": [5, 5],
-                "absolute": False
-            },
-
-
-            # "observation": {
-            #     "type": "Kinematics",
-            #     "vehicles_count": 15,
-            #     "features": ["presence", "x", "y", "vx", "vy", "cos_h", "sin_h"],
-            #     "features_range": {
-            #         "x": [-100, 100],
-            #         "y": [-100, 100],
-            #         "vx": [-40, 40],
-            #         "vy": [-40, 40]
-            #     },
-            #     "absolute": False,
-            #     "normalize":True,
-            #     "order": "sorted"
-            # },
             "action": {
                 "type": "DiscreteMetaAction",
                 "longitudinal": True,
