@@ -161,7 +161,6 @@ class KinematicObservation(ObservationType):
         :param observe_intentions: Observe the destinations of other vehicles
         """
         super().__init__(env)
-        print("##############################KinematicObservation##############################")
 
         self.features = features or self.FEATURES
         self.vehicles_count = vehicles_count
@@ -254,7 +253,6 @@ class OccupancyGridObservation(ObservationType):
         :param vehicles_count: Number of observed vehicles
         """
         super().__init__(env)
-        print("##############################OccupancyGridObservation##############################")
         self.features = features if features is not None else self.FEATURES
         self.grid_size = np.array(grid_size) if grid_size is not None else np.array(self.GRID_SIZE)
         self.grid_step = np.array(grid_step) if grid_step is not None else np.array(self.GRID_STEP)
