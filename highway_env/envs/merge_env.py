@@ -9,7 +9,8 @@ from highway_env.vehicle.controller import ControlledVehicle
 from highway_env.vehicle.objects import Obstacle
 from highway_env.utils import near_split
 
-
+START_DIS = 540
+END_DIS = 720
 class MergeEnv(AbstractEnv):
 
     """
@@ -105,14 +106,14 @@ class MergeEnv(AbstractEnv):
         r = -0.1#Time penalty
         # if self.vehicle.crashed:
         #     r = self.COLLISION_REWARD
-        if self.vehicle.position[0] > 320:
+        if self.vehicle.position[0] > END_DIS:
             r = 1.
         #print("Reward: {}".format(r))
         return r
 
     def _is_terminal(self) -> bool:
         """The episode is over when a collision occurs or when the access ramp has been passed."""
-        terminal = self.vehicle.crashed or self.vehicle.position[0] > 720
+        terminal = self.vehicle.crashed or self.vehicle.position[0] > END_DIS
         #if terminal:
         #    print("Terminal......................")
         return terminal
@@ -202,7 +203,7 @@ class MergeEnv(AbstractEnv):
         #Make init velocity of ego vehicle a random value
         ego_init_speed = np.random.uniform(10.,30.)
         ego_vehicle = self.action_type.vehicle_class(road,
-                                                     road.network.get_lane(("j", "k", 0)).position(540, 0), speed=ego_init_speed)
+                                                     road.network.get_lane(("j", "k", 0)).position(START_DIS, 0), speed=ego_init_speed)
         for _ in range(self.config["vehicles_count"]):
 
             lanes = np.arange(2)
