@@ -102,7 +102,7 @@ class MergeEnv(AbstractEnv):
         #                   [self.COLLISION_REWARD + self.MERGING_SPEED_REWARD,
         #                     self.HIGH_SPEED_REWARD + self.RIGHT_LANE_REWARD],
         #                   [0, 1])
-        r = -0.1#Time penalty
+        r = 0.#-0.1#Time penalty
         # if self.vehicle.crashed:
         #     r = self.COLLISION_REWARD
         if self.vehicle.position[0] > 320:
