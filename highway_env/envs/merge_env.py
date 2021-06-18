@@ -112,7 +112,7 @@ class MergeEnv(AbstractEnv):
 
     def _is_terminal(self) -> bool:
         """The episode is over when a collision occurs or when the access ramp has been passed."""
-        terminal = self.vehicle.crashed or self.vehicle.position[0] > 320
+        terminal = self.vehicle.crashed or self.vehicle.position[0] > 720
         #if terminal:
         #    print("Terminal......................")
         return terminal
@@ -161,7 +161,7 @@ class MergeEnv(AbstractEnv):
         net = RoadNetwork()
 
         # Highway lanes
-        ends = [150, 80, 80, 150]  # Before, converging, merge, after
+        ends = [550, 80, 80, 150]  # Before, converging, merge, after
         c, s, n = LineType.CONTINUOUS_LINE, LineType.STRIPED, LineType.NONE
         y = [0, StraightLane.DEFAULT_WIDTH]
         line_type = [[c, s], [n, c]]
@@ -202,7 +202,7 @@ class MergeEnv(AbstractEnv):
         #Make init velocity of ego vehicle a random value
         ego_init_speed = np.random.uniform(10.,30.)
         ego_vehicle = self.action_type.vehicle_class(road,
-                                                     road.network.get_lane(("j", "k", 0)).position(140, 0), speed=ego_init_speed)
+                                                     road.network.get_lane(("j", "k", 0)).position(540, 0), speed=ego_init_speed)
         for _ in range(self.config["vehicles_count"]):
 
             lanes = np.arange(2)
