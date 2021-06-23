@@ -27,11 +27,12 @@ class MergeEnv(AbstractEnv):
     MERGING_SPEED_REWARD: float = -0.5
     LANE_CHANGE_REWARD: float = -0.05
 
-    def __init__(self, avg_speed=-1, min_density=0., max_density=1., observation="LIST"):
+    def __init__(self, avg_speed=-1, min_density=0., max_density=1., cooperative_prob=0., observation="LIST"):
         self.avg_speed = avg_speed
         self.min_density = min_density,
         self.max_density = max_density
         self.config = self.default_config()
+        self.config.update({"cooperative_prob": cooperative_prob,})
         if observation == "GRID":
             self.config.update({
                 "observation": {
@@ -141,6 +142,7 @@ class MergeEnv(AbstractEnv):
         config = super().default_config()
         config.update({
             "vehicles_density": 1,
+            "cooperative_prob": 0.,
             "action": {
                 "type": "DiscreteMetaAction",
                 "longitudinal": True,
@@ -211,12 +213,14 @@ class MergeEnv(AbstractEnv):
             lane = self.road.network.get_lane(("a", "b", lane_id))
             speed=np.random.normal(self.config["avg_speed"], 3.)
             speed=np.clip(speed, 5., lane.speed_limit)
+            cooperative = np.random.uniform()<self.config["cooperative_prob"]
             new_vehicle = other_vehicles_type.create_random(self.road,
                                                   lane_from="a",
                                                   lane_to="b",
                                                   lane_id=lane_id,
                                                   speed=speed,
                                                   spacing=1 / self.config["vehicles_density"],
+                                                  cooperative=cooperative,
                                                   )
 
 
@@ -227,7 +231,7 @@ class MergeEnv(AbstractEnv):
             self.road.vehicles.append(new_vehicle)
 
         #IMPORTANT: Ego vehicle should be added after others!
-        road.vehicles.append(ego_vehicle)
+        road.append_ego_vehicle(ego_vehicle)
 
         self.vehicle = ego_vehicle
 
@@ -246,4 +250,10 @@ register(
     id='mergemixed-v0',
     entry_point='highway_env.envs:MergeEnv',
     kwargs={'avg_speed' : -1},
+)
+
+register(
+    id='mergecooperative-v0',
+    entry_point='highway_env.envs:MergeEnv',
+    kwargs={'avg_speed' : -1, 'cooperative_prob' : 1.},
 )

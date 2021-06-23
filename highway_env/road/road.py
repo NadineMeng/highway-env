@@ -4,6 +4,7 @@ from typing import List, Tuple, Dict, TYPE_CHECKING, Optional
 
 from highway_env.road.lane import LineType, StraightLane, AbstractLane
 from highway_env.vehicle.objects import Landmark
+import copy
 
 if TYPE_CHECKING:
     from highway_env.vehicle import kinematics, objects
@@ -273,7 +274,11 @@ class Road(object):
         self.objects = road_objects or []
         self.np_random = np_random if np_random else np.random.RandomState()
         self.record_history = record_history
+        self.ego_vehicle = None
 
+    def append_ego_vehicle(self, ego_vehicle):
+        self.ego_vehicle = ego_vehicle
+        self.vehicles.append(ego_vehicle)
     def close_vehicles_to(self, vehicle: 'kinematics.Vehicle', distance: float, count: int = None,
                           see_behind: bool = True) -> object:
         vehicles = [v for v in self.vehicles
@@ -305,7 +310,7 @@ class Road(object):
             for other in self.objects:
                 vehicle.check_collision(other, dt)
 
-    def neighbour_vehicles(self, vehicle: 'kinematics.Vehicle', lane_index: LaneIndex = None) \
+    def neighbour_vehicles(self, vehicle: 'kinematics.Vehicle', lane_index: LaneIndex = None, consider_ego=False) \
             -> Tuple[Optional['kinematics.Vehicle'], Optional['kinematics.Vehicle']]:
         """
         Find the preceding and following vehicles of a given vehicle.
@@ -335,6 +340,11 @@ class Road(object):
                 if s_v < s and (s_rear is None or s_v > s_rear):
                     s_rear = s_v
                     v_rear = v
+        if consider_ego and self.ego_vehicle.position[0]>vehicle.position[0]:
+            if  v_front is None or self.ego_vehicle.position[0]<v_front.position[0]:
+                v_front = copy.deepcopy(self.ego_vehicle)
+                v_front.position[1] = vehicle.position[1]
+
         return v_front, v_rear
 
     def __repr__(self):

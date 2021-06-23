@@ -51,11 +51,12 @@ class IDMVehicle(ControlledVehicle):
                  target_speed: float = None,
                  route: Route = None,
                  enable_lane_change: bool = True,
-                 timer: float = None):
+                 timer: float = None,
+                 cooperative = False):
         super().__init__(road, position, heading, speed, target_lane_index, target_speed, route)
         self.enable_lane_change = enable_lane_change
         self.timer = timer or (np.sum(self.position)*np.pi) % self.LANE_CHANGE_DELAY
-
+        self.cooperative = cooperative
     def randomize_behavior(self):
         pass
 
@@ -94,7 +95,12 @@ class IDMVehicle(ControlledVehicle):
         action['steering'] = np.clip(action['steering'], -self.MAX_STEERING_ANGLE, self.MAX_STEERING_ANGLE)
 
         # Longitudinal: IDM
-        front_vehicle, rear_vehicle = self.road.neighbour_vehicles(self, self.lane_index)
+        consider_ego = self.cooperative and self.lane_index[2] == 1
+        front_vehicle, rear_vehicle = self.road.neighbour_vehicles(self, self.lane_index, consider_ego)
+        #ego_vehicle_distance = self.road.ego_vehicle_distance_to(self)
+
+
+
         action['acceleration'] = self.acceleration(ego_vehicle=self,
                                                    front_vehicle=front_vehicle,
                                                    rear_vehicle=rear_vehicle)
