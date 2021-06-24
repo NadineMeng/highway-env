@@ -10,7 +10,7 @@ from highway_env.vehicle.objects import Obstacle
 from highway_env.utils import near_split
 
 START_DIS = 540
-END_DIS = 720
+END_DIS = 680
 class MergeEnv(AbstractEnv):
 
     """
@@ -27,12 +27,15 @@ class MergeEnv(AbstractEnv):
     MERGING_SPEED_REWARD: float = -0.5
     LANE_CHANGE_REWARD: float = -0.05
 
-    def __init__(self, avg_speed=-1, min_density=0., max_density=1., cooperative_prob=0., observation="LIST"):
+    def __init__(self, avg_speed=-1, min_density=0., max_density=1., cooperative_prob=0., observation="LIST", vehicles_count=None):
         self.avg_speed = avg_speed
         self.min_density = min_density,
         self.max_density = max_density
         self.config = self.default_config()
         self.config.update({"cooperative_prob": cooperative_prob,})
+        if vehicles_count is not None:
+            self.config.update({"vehicles_count": vehicles_count,})
+
         if observation == "GRID":
             self.config.update({
                 "observation": {
@@ -206,6 +209,14 @@ class MergeEnv(AbstractEnv):
         ego_init_speed = np.random.uniform(10.,30.)
         ego_vehicle = self.action_type.vehicle_class(road,
                                                      road.network.get_lane(("j", "k", 0)).position(START_DIS, 0), speed=ego_init_speed)
+
+
+        distance_back = 8.
+        sample_vehicle = other_vehicles_type(road,
+                                                     road.network.get_lane(("a", "b", 1)).position(START_DIS - distance_back, 0), speed=ego_init_speed, cooperative=True)
+        sample_vehicle.enable_lane_change = False#np.random.random()<0.5
+        self.road.vehicles.append(sample_vehicle)
+
         for _ in range(self.config["vehicles_count"]):
 
             lanes = np.arange(2)
@@ -255,5 +266,5 @@ register(
 register(
     id='mergecooperative-v0',
     entry_point='highway_env.envs:MergeEnv',
-    kwargs={'avg_speed' : -1, 'cooperative_prob' : 1.},
+    kwargs={'avg_speed' : -1, 'cooperative_prob' : 1., 'vehicles_count' : 0},
 )
