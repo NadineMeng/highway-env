@@ -73,7 +73,7 @@ class MergeEnv(AbstractEnv):
         cost = 0.
         if self.vehicle.crashed:
             cost = 1.
-        else if self.vehicle.position[0] > END_DIS:
+        elif self.vehicle.position[0] > END_DIS:
             cost = -1.
         return cost
 
