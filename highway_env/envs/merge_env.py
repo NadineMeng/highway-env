@@ -56,13 +56,15 @@ class MergeEnv(AbstractEnv):
                     "vehicles_count": 15,
                     "features": ["presence", "x", "y", "vx", "vy", "cos_h", "sin_h"],
                     "features_range": {
-                        "x": [-100, 100],
+                        "x": [-1000, 1000],
                         "y": [-100, 100],
                         "vx": [-40, 40],
                         "vy": [-40, 40]
                     },
                     "absolute": False,
                     "normalize":True,
+                    "see_behind":True,
+                    "clip":False,
                     "order": "sorted"
                 }})
         else:
