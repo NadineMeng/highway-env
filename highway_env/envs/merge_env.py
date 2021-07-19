@@ -27,12 +27,13 @@ class MergeEnv(AbstractEnv):
     MERGING_SPEED_REWARD: float = -0.5
     LANE_CHANGE_REWARD: float = -0.05
 
-    def __init__(self, avg_speed=-1, min_density=0., max_density=1., cooperative_prob=0., observation="LIST"):
+    def __init__(self, avg_speed=-1, min_density=0., max_density=1., cooperative_prob=0., observation="LIST", negative_cost=False):
         self.avg_speed = avg_speed
         self.min_density = min_density,
         self.max_density = max_density
         self.config = self.default_config()
         self.config.update({"cooperative_prob": cooperative_prob,})
+        self.config.update({"negative_cost": negative_cost,})
         if observation == "GRID":
             self.config.update({
                 "observation": {
@@ -75,7 +76,7 @@ class MergeEnv(AbstractEnv):
         cost = 0.
         if self.vehicle.crashed:
             cost = 1.
-        elif self.vehicle.position[0] > END_DIS:
+        elif self.vehicle.position[0] > END_DIS and self.config["negative_cost"] is True:
             cost = -1.
         return cost
 
@@ -110,8 +111,8 @@ class MergeEnv(AbstractEnv):
         #                   [0, 1])
         r = -0.1#Time penalty
 
-        # if self.vehicle.position[0] > END_DIS:
-        #     r = 1.
+        if self.vehicle.position[0] > END_DIS and self.config["negative_cost"] is False:
+            r = 1.
         #print("Reward: {}".format(r))
         return r
 
@@ -146,6 +147,7 @@ class MergeEnv(AbstractEnv):
         config.update({
             "vehicles_density": 1,
             "cooperative_prob": 0.,
+            "negative_cost": False,
             "action": {
                 "type": "DiscreteMetaAction",
                 "longitudinal": True,
@@ -260,3 +262,4 @@ register(
     entry_point='highway_env.envs:MergeEnv',
     kwargs={'avg_speed' : -1, 'cooperative_prob' : 1.},
 )
+
