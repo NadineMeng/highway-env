@@ -106,7 +106,8 @@ class AbstractEnv(gym.Env):
             "render_agent": True,
             "offscreen_rendering": os.environ.get("OFFSCREEN_RENDERING", "0") == "1",
             "manual_control": False,
-            "real_time_rendering": False
+            "real_time_rendering": False,
+            "force_render": True
         }
 
     def seed(self, seed: int = None) -> List[int]:
@@ -221,7 +222,8 @@ class AbstractEnv(gym.Env):
         reward = self._reward(action)
         terminal = self._is_terminal()
         info = self._info(obs, action)
-
+        if self.config["force_render"]:
+            self.render()
         return obs, reward, terminal, info
 
     def _simulate(self, action: Optional[Action] = None) -> None:
