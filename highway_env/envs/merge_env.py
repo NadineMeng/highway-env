@@ -123,7 +123,7 @@ class MergeEnv(AbstractEnv):
 
     def _is_terminal(self) -> bool:
         """The episode is over when a collision occurs or when the access ramp has been passed."""
-        terminal = self.vehicle.crashed or self.vehicle.position[0] > END_DIS
+        terminal = self.vehicle.crashed or self.vehicle.position[0] > END_DIS or self.road.any_crash
         #if terminal:
         #    print("Terminal......................")
         return terminal

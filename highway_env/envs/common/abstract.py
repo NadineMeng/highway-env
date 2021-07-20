@@ -159,6 +159,7 @@ class AbstractEnv(gym.Env):
         info = {
             "speed": self.vehicle.speed,
             "crashed": self.vehicle.crashed,
+            "any_crash": self.road.any_crash,
             "action": action,
         }
         try:

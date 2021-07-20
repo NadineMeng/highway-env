@@ -275,6 +275,8 @@ class Road(object):
         self.np_random = np_random if np_random else np.random.RandomState()
         self.record_history = record_history
         self.ego_vehicle = None
+        self.any_crash = False
+
 
     def append_ego_vehicle(self, ego_vehicle):
         self.ego_vehicle = ego_vehicle
@@ -302,11 +304,14 @@ class Road(object):
 
         :param dt: timestep [s]
         """
+        self.any_crash = False
         for vehicle in self.vehicles:
             vehicle.step(dt)
         for i, vehicle in enumerate(self.vehicles):
             for other in self.vehicles[i+1:]:
                 vehicle.check_collision(other, dt)
+                if vehicle.crashed:
+                    self.any_crash = True
             for other in self.objects:
                 vehicle.check_collision(other, dt)
 
