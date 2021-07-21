@@ -80,9 +80,9 @@ class MergeEnv(AbstractEnv):
     def _cost(self, action: int) -> float:
         cost = 0.
         if self.vehicle.crashed:
-            cost = 1.
+            cost = 0.01
         elif self.vehicle.position[0] > END_DIS and self.config["negative_cost"] is True:
-            cost = -1.
+            cost = -0.01
         return cost
 
 
@@ -114,10 +114,10 @@ class MergeEnv(AbstractEnv):
         #                   [self.COLLISION_REWARD + self.MERGING_SPEED_REWARD,
         #                     self.HIGH_SPEED_REWARD + self.RIGHT_LANE_REWARD],
         #                   [0, 1])
-        r = -0.1#Time penalty
+        r = -0.001#Time penalty
 
         if self.vehicle.position[0] > END_DIS and self.config["negative_cost"] is False:
-            r = 1.
+            r = 0.01
         #print("Reward: {}".format(r))
         return r
 
