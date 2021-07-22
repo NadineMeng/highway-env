@@ -221,6 +221,8 @@ class KinematicObservation(ObservationType):
         # Fill missing rows
         if df.shape[0] < self.vehicles_count:
             rows = np.zeros((self.vehicles_count - df.shape[0], len(self.features)))
+            rows[:,1]=1.
+            rows[:,2]=-1.
             df = df.append(pd.DataFrame(data=rows, columns=self.features), ignore_index=True)
         # Reorder
         df = df[self.features]

@@ -80,9 +80,9 @@ class MergeEnv(AbstractEnv):
     def _cost(self, action: int) -> float:
         cost = 0.
         if self.vehicle.crashed:
-            cost = 0.01
+            cost = 1.
         elif self.vehicle.position[0] > END_DIS and self.config["negative_cost"] is True:
-            cost = -0.01
+            cost = -1.
         return cost
 
 
