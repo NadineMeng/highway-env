@@ -27,7 +27,7 @@ class MergeEnv(AbstractEnv):
     MERGING_SPEED_REWARD: float = -0.5
     LANE_CHANGE_REWARD: float = -0.05
 
-    def __init__(self, avg_speed=-1, min_density=0., max_density=1., cooperative_prob=0., observation="LIST", negative_cost=False, sample_vehicles_count=0, random_vehicles_count=20, force_render=False):
+    def __init__(self, avg_speed=-1, min_density=0., max_density=1., cooperative_prob=0., observation="LIST", negative_cost=False, sample_vehicles_count=0, random_vehicles_count=20, force_render=False, seed=123, frames_per_decision=1):
         self.avg_speed = avg_speed
         self.min_density = min_density,
         self.max_density = max_density
@@ -37,7 +37,7 @@ class MergeEnv(AbstractEnv):
         self.config.update({"sample_vehicles_count": sample_vehicles_count,})
         self.config.update({"random_vehicles_count": random_vehicles_count,})
         self.config.update({"force_render": force_render,})
-
+        self.config.update({"policy_frequency": self.config["policy_frequency"]*frames_per_decision,})
 
         if observation == "GRID":
             self.config.update({
@@ -76,6 +76,8 @@ class MergeEnv(AbstractEnv):
         else:
             raise ValueError('Observation {} not implemented'.format(observation))
         super().__init__(self.config)
+        self.seed(seed)
+        np.random.seed(seed)
 
     def _cost(self, action: int) -> float:
         cost = 0.
