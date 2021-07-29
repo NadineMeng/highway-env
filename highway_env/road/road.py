@@ -249,6 +249,20 @@ class RoadNetwork(object):
             route = route[1:]
         return self.get_lane(route[0]).position(longitudinal, lateral), self.get_lane(route[0]).heading_at(longitudinal)
 
+    def distance_along_route(self, route: Route, longitudinal: float, lateral: float) \
+            -> Tuple[np.ndarray, float]:
+        """
+        Get the absolute position and heading along a route composed of several lanes at some local coordinates.
+
+        :param route: a planned route, list of lane indexes
+        :param longitudinal: longitudinal position
+        :param lateral: : lateral position
+        :return: position, heading
+        """
+        while len(route) > 1 and longitudinal > self.get_lane(route[0]).length:
+            longitudinal -= self.get_lane(route[0]).length
+            route = route[1:]
+        return self.get_lane(route[0]).position(longitudinal, lateral), self.get_lane(route[0]).heading_at(longitudinal)
 
 class Road(object):
 
@@ -314,6 +328,48 @@ class Road(object):
                     self.any_crash = True
             for other in self.objects:
                 vehicle.check_collision(other, dt)
+
+    def get_vehicle_max_lane_speed(self, vehicle):
+        lane =  self.network.get_lane(vehicle.lane_index)
+        return lane.speed_limit
+    def get_ego_vehicle_distance(self):
+        ego_s = self.network.get_lane(self.ego_vehicle.lane_index).local_coordinates(self.ego_vehicle.position)[0]
+        if self.ego_vehicle.lane_index == ('j', 'k', 0):
+            ego_s = ego_s - (550+80)
+        elif self.ego_vehicle.lane_index == ('k', 'b', 0):
+            ego_s =  ego_s - 80
+        # elif self.ego_vehicle.lane_index == ('b', 'c', 0):
+        #     ego_s =  ego_s - (150 + 80)
+        elif self.ego_vehicle.lane_index == ('c', 'd', 1):
+            ego_s =   ego_s
+        elif self.ego_vehicle.lane_index == ('d', 'e', 1):
+            ego_s =  80. + ego_s
+        return -ego_s
+
+    def get_merging_vehicles(self):
+        merging_vehicles = []
+        for v in self.vehicles + self.objects:
+            s, d = self.network.get_lane(v.lane_index).local_coordinates(v.position)
+            if v.lane_index == ('b', 'c', 1):
+                merging_vehicles.append([280-s, v.speed])
+        return merging_vehicles
+
+
+    def get_front_vehicles(self):
+        front_vehicles = [[80., 0.]]#[[100., 0.]]
+        ego_s = self.get_ego_vehicle_distance()
+        for v in self.vehicles + self.objects:
+            if v !=self.ego_vehicle:
+                s = self.network.get_lane(v.lane_index).local_coordinates(v.position)[0]
+                if v.lane_index == ('c', 'd', 1):
+                    s = ego_s + s
+                    if s>=0.:
+                        front_vehicles.append([s, v.speed])
+                elif v.lane_index == ('d', 'e', 1):
+                    s = ego_s + s + 80.
+                    if s>=0.:
+                        front_vehicles.append([s, v.speed])
+        return front_vehicles
 
     def neighbour_vehicles(self, vehicle: 'kinematics.Vehicle', lane_index: LaneIndex = None, consider_ego=False) \
             -> Tuple[Optional['kinematics.Vehicle'], Optional['kinematics.Vehicle']]:

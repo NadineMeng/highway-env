@@ -134,7 +134,11 @@ class Vehicle(RoadObject):
         beta = np.arctan(1 / 2 * np.tan(delta_f))
         v = self.speed * np.array([np.cos(self.heading + beta),
                                    np.sin(self.heading + beta)])
-        self.position += v * dt
+        a = self.action['acceleration'] * np.array([np.cos(self.heading + beta),
+                                   np.sin(self.heading + beta)])
+
+
+        self.position += v * dt + 0.5*a*dt*dt
         if self.impact is not None:
             self.position += self.impact
             self.crashed = True

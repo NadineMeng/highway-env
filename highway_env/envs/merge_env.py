@@ -6,6 +6,7 @@ from highway_env.envs.common.abstract import AbstractEnv
 from highway_env.road.lane import LineType, StraightLane, SineLane
 from highway_env.road.road import Road, RoadNetwork
 from highway_env.vehicle.controller import ControlledVehicle
+from highway_env.vehicle.frenet_vehicle import FrenetVehicle
 from highway_env.vehicle.objects import Obstacle
 from highway_env.utils import near_split
 
@@ -191,11 +192,11 @@ class MergeEnv(AbstractEnv):
         ljk = StraightLane([0, 6.5 + 4 + 4], [ends[0], 6.5 + 4 + 4], line_types=[c, c], forbidden=True)
         lkb = SineLane(ljk.position(ends[0], -amplitude), ljk.position(sum(ends[:2]), -amplitude),
                        amplitude, 2 * np.pi / (2*ends[1]), np.pi / 2, line_types=[c, c], forbidden=True)
-        lbc = StraightLane(lkb.position(ends[1], -StraightLane.DEFAULT_WIDTH), lkb.position(ends[1], -StraightLane.DEFAULT_WIDTH) + [ends[2], 0],
+        lbc = StraightLane(lkb.position(ends[1], -StraightLane.DEFAULT_WIDTH), lkb.position(ends[1], -StraightLane.DEFAULT_WIDTH) + [ends[2], 0.],
                            line_types=[n, c], forbidden=True)
         net.add_lane("j", "k", ljk)
         net.add_lane("k", "b", lkb)
-        net.add_lane("b", "c", lbc)
+        net.add_lane("bb", "cc", lbc)
         road = Road(network=net, np_random=self.np_random, record_history=self.config["show_trajectories"])
         #road.objects.append(Obstacle(road, lbc.position(ends[2], 0)))
         self.road = road
@@ -215,8 +216,10 @@ class MergeEnv(AbstractEnv):
         # road.vehicles.append(other_vehicles_type(road, road.network.get_lane(("a", "b", 1)).position(70, 0), speed=31))
         # road.vehicles.append(other_vehicles_type(road, road.network.get_lane(("a", "b", 0)).position(5, 0), speed=31.5))
         #Make init velocity of ego vehicle a random value
-        ego_init_speed = np.random.uniform(10.,30.)
-        ego_vehicle = self.action_type.vehicle_class(road,
+        ego_init_speed = np.random.uniform(10.,18.)
+        ego_init_speed=np.clip(ego_init_speed, 5., road.network.get_lane(("j", "k", 0)).speed_limit)
+
+        ego_vehicle = FrenetVehicle(road,
                                                      road.network.get_lane(("j", "k", 0)).position(START_DIS, 0), speed=ego_init_speed)
 
 
