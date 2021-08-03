@@ -45,12 +45,12 @@ class FrenetVehicle(Vehicle):
         self.route = route
 
         #Policy Interface for Frenet Planner
-        motion_constraints = MotionConstraints(speed_limit=30., acceleration_limit=5.,
-                                               deceleration_limit=5., max_jerk_limit=10., min_jerk_limit=-10.,comfort_jerk_limit=1.)
+        motion_constraints = MotionConstraints(speed_limit=30., acceleration_limit=4.,
+                                               deceleration_limit=8., max_jerk_limit=10., min_jerk_limit=-10.,comfort_jerk_limit=1.)
 
         self.risk_param = RiskParam(veh_length=5.,veh_width=2., safety_distance=0.1, time_headway=0.9)
-
-        self.policy_params = PolicyParams(max_acc_agent=1., dt=0.3, history_length=4, max_real_agents=20, max_occl_agents=4, motion_constraints=motion_constraints, risk_param=self.risk_param)
+        
+        self.policy_params = PolicyParams(max_acc_agent=1., dt=0.1, history_length=4, max_real_agents=20, max_occl_agents=4, motion_constraints=motion_constraints, risk_param=self.risk_param)
         self.policy = Policy(self.policy_params)
         self.control_freq=1
         self.counter = 0

@@ -6,6 +6,7 @@ from highway_env import utils
 from highway_env.vehicle.dynamics import BicycleVehicle
 from highway_env.vehicle.kinematics import Vehicle
 from highway_env.vehicle.controller import MDPVehicle
+from highway_env.vehicle.frenet_vehicle import FrenetVehicle
 
 if TYPE_CHECKING:
     from highway_env.envs.common.abstract import AbstractEnv
@@ -161,10 +162,17 @@ class DiscreteMetaAction(ActionType):
         1: 'IDLE',
         2: 'LANE_RIGHT'
     }
+
+    ACTIONS_FRENET = {
+        0: 'DEF',
+        1: 'PROG',
+        2: 'COOP'
+    }
     """A mapping of lateral action indexes to labels."""
 
     def __init__(self,
                  env: 'AbstractEnv',
+                 frenet: bool = False,
                  longitudinal: bool = True,
                  lateral: bool = True,
                  **kwargs) -> None:
@@ -176,9 +184,11 @@ class DiscreteMetaAction(ActionType):
         :param lateral: include lateral actions
         """
         super().__init__(env)
+        self.frenet = frenet
         self.longitudinal = longitudinal
         self.lateral = lateral
-        self.actions = self.ACTIONS_ALL if longitudinal and lateral \
+        self.actions = self.ACTIONS_FRENET if frenet\
+            else self.ACTIONS_ALL if longitudinal and lateral \
             else self.ACTIONS_LONGI if longitudinal \
             else self.ACTIONS_LAT if lateral \
             else None
@@ -191,7 +201,10 @@ class DiscreteMetaAction(ActionType):
 
     @property
     def vehicle_class(self) -> Callable:
-        return MDPVehicle
+        if self.frenet:
+            return FrenetVehicle
+        else:
+            return MDPVehicle
 
     def act(self, action: int) -> None:
         self.controlled_vehicle.act(self.actions[action])
