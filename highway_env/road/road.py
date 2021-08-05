@@ -334,12 +334,14 @@ class Road(object):
         return lane.speed_limit
     def get_ego_vehicle_distance(self):
         ego_s = self.network.get_lane(self.ego_vehicle.lane_index).local_coordinates(self.ego_vehicle.position)[0]
+        print(self.ego_vehicle.lane_index)
+        print("raw s: {}".format(ego_s))
         if self.ego_vehicle.lane_index == ('j', 'k', 0):
             ego_s = ego_s - (550+80)
         elif self.ego_vehicle.lane_index == ('k', 'b', 0):
             ego_s =  ego_s - 80
-        # elif self.ego_vehicle.lane_index == ('b', 'c', 0):
-        #     ego_s =  ego_s - (150 + 80)
+        elif self.ego_vehicle.lane_index == ('b', 'c', 1):
+            ego_s =  ego_s - (200 + 80)
         elif self.ego_vehicle.lane_index == ('c', 'd', 1):
             ego_s =   ego_s
         elif self.ego_vehicle.lane_index == ('d', 'e', 1):

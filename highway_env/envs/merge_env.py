@@ -29,6 +29,7 @@ class MergeEnv(AbstractEnv):
     LANE_CHANGE_REWARD: float = -0.05
 
     def __init__(self, avg_speed=-1, min_density=0., max_density=1., cooperative_prob=0., observation="LIST", negative_cost=False, sample_vehicles_count=0, random_vehicles_count=20, force_render=False, seed=123, frames_per_decision=1, frenet=False):
+        self.scenario_counter = 0
         self.avg_speed = avg_speed
         self.min_density = min_density,
         self.max_density = max_density
@@ -49,7 +50,7 @@ class MergeEnv(AbstractEnv):
                     "lateral": False,
                 }
             })
-            self.config.update({"simulation_frequency": 10})
+            self.config.update({"simulation_frequency": 20})
 
 
         if observation == "GRID":
@@ -91,7 +92,8 @@ class MergeEnv(AbstractEnv):
         super().__init__(self.config)
         self.seed(seed)
         np.random.seed(seed)
-
+        while self.scenario_counter!=1:
+            self._reset()
     def _cost(self, action: int) -> float:
         cost = 0.
         if self.vehicle.crashed:
@@ -159,6 +161,8 @@ class MergeEnv(AbstractEnv):
 
         self._make_road()
         self._make_vehicles()
+        print("Scenario: {} Generated.".format(self.scenario_counter))
+        self.scenario_counter = self.scenario_counter + 1
 
     @classmethod
     def default_config(cls) -> dict:
@@ -230,7 +234,7 @@ class MergeEnv(AbstractEnv):
         # road.vehicles.append(other_vehicles_type(road, road.network.get_lane(("a", "b", 0)).position(5, 0), speed=31.5))
         #Make init velocity of ego vehicle a random value
         ego_init_speed = np.random.uniform(10.,18.)
-        ego_init_speed=np.clip(ego_init_speed, 5., road.network.get_lane(("j", "k", 0)).speed_limit)
+        ego_init_speed=19.#np.clip(ego_init_speed, 5., road.network.get_lane(("j", "k", 0)).speed_limit)
 
 
         ego_vehicle = self.action_type.vehicle_class(road,
@@ -241,7 +245,7 @@ class MergeEnv(AbstractEnv):
 
         for _ in range(self.config["sample_vehicles_count"]):
             lanes = np.arange(2)
-            lane_id = self.road.np_random.choice(lanes, size=1).astype(int)[0]
+            lane_id = 1#self.road.np_random.choice(lanes, size=1).astype(int)[0]
             lane = self.road.network.get_lane(("b", "c", lane_id))
             distance_back = np.random.uniform(600, 620.)
             speed=np.random.normal(self.config["avg_speed"], 3.)
@@ -310,6 +314,6 @@ register(
 register(
     id='mergesample-v0',
     entry_point='highway_env.envs:MergeEnv',
-    kwargs={'avg_speed' : 10, 'min_density' : 0.3, 'max_density' : 0.6, 'sample_vehicles_count' : 5, 'random_vehicles_count' : 0},
+    kwargs={'avg_speed' : 15, 'min_density' : 0.3, 'max_density' : 0.6, 'sample_vehicles_count' : 10, 'random_vehicles_count' : 0},
 )
 

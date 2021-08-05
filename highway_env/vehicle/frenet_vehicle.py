@@ -48,10 +48,15 @@ class FrenetVehicle(Vehicle):
         motion_constraints = MotionConstraints(speed_limit=30., acceleration_limit=4.,
                                                deceleration_limit=8., max_jerk_limit=10., min_jerk_limit=-10.,comfort_jerk_limit=1.)
 
-        self.risk_param = RiskParam(veh_length=5.,veh_width=2., safety_distance=0.1, time_headway=0.9)
-        
-        self.policy_params = PolicyParams(max_acc_agent=1., dt=0.1, history_length=4, max_real_agents=20, max_occl_agents=4, motion_constraints=motion_constraints, risk_param=self.risk_param)
+        self.risk_param = RiskParam(veh_length=5.,veh_width=2., safety_distance=0.2, time_headway=0.5)
+        self.risk_param_easier = RiskParam(veh_length=5.,veh_width=2., safety_distance=0.1, time_headway=0.25)
+
+        self.policy_params = PolicyParams(max_acc_agent=1., dt=1., history_length=4, max_real_agents=20, max_occl_agents=4, motion_constraints=motion_constraints, risk_param=self.risk_param)
+        self.policy_params_easier = PolicyParams(max_acc_agent=1., dt=1., history_length=4, max_real_agents=20, max_occl_agents=4, motion_constraints=motion_constraints, risk_param=self.risk_param_easier)
+
         self.policy = Policy(self.policy_params)
+        self.policy_easier = Policy(self.policy_params_easier)
+
         self.control_freq=1
         self.counter = 0
     @classmethod
@@ -121,7 +126,12 @@ class FrenetVehicle(Vehicle):
         if self.counter==self.control_freq:
             self.counter = 0
             self.feed_state_to_policy_merging()
-            new_acceleration = self.policy.get_helsinki_acceleration(v0=float(self.speed), a0=float(self.action['acceleration']), action=0)
+            try:
+                new_acceleration = self.policy.get_helsinki_acceleration(v0=float(self.speed), a0=float(self.action['acceleration']), action=0)
+            except:
+                new_acceleration = -100.
+            if new_acceleration == -100.:
+                new_acceleration = self.policy_easier.get_helsinki_acceleration(v0=float(self.speed), a0=float(self.action['acceleration']), action=0)
             # print("Old acc: {}".format(self.action['acceleration']))
             # print("Helsinki acc: {}".format(new_acceleration))
             #acceleration = self.action['acceleration'] + dt*(new_acceleration-self.action['acceleration'])
