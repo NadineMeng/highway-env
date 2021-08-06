@@ -352,7 +352,7 @@ class Road(object):
         merging_vehicles = []
         for v in self.vehicles + self.objects:
             s, d = self.network.get_lane(v.lane_index).local_coordinates(v.position)
-            if v.lane_index == ('b', 'c', 1):
+            if v.lane_index == ('b', 'c', 1) and v !=self.ego_vehicle:
                 merging_vehicles.append([280-s, v.speed])
         return merging_vehicles
 
