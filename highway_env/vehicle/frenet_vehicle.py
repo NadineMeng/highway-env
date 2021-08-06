@@ -8,6 +8,9 @@ from highway_env.types import Vector
 from highway_env.vehicle.kinematics import Vehicle
 from intersection_behavior import Policy, Action, PolicyParams, RiskParam, MotionConstraints
 
+
+USE_EASIER_POLICY = True
+
 class FrenetVehicle(Vehicle):
     """
     A vehicle piloted by two low-level controller, allowing high-level actions such as cruise control and lane changes.
@@ -48,10 +51,10 @@ class FrenetVehicle(Vehicle):
         motion_constraints = MotionConstraints(speed_limit=30., acceleration_limit=4.,
                                                deceleration_limit=8., max_jerk_limit=10., min_jerk_limit=-10.,comfort_jerk_limit=1.)
 
-        self.risk_param = RiskParam(veh_length=5.,veh_width=2., safety_distance=0.2, time_headway=0.5)
-        self.risk_param_easier = RiskParam(veh_length=5.,veh_width=2., safety_distance=0.1, time_headway=0.25)
+        self.risk_param = RiskParam(veh_length=5.,veh_width=2., safety_distance=1.0, time_headway=0.)
+        self.risk_param_easier = RiskParam(veh_length=5.,veh_width=2., safety_distance=0.5, time_headway=0.)
 
-        self.policy_params = PolicyParams(max_acc_agent=1., dt=1., history_length=4, max_real_agents=20, max_occl_agents=4, motion_constraints=motion_constraints, risk_param=self.risk_param)
+        self.policy_params = PolicyParams(max_acc_agent=3., dt=1., history_length=4, max_real_agents=20, max_occl_agents=4, motion_constraints=motion_constraints, risk_param=self.risk_param)
         self.policy_params_easier = PolicyParams(max_acc_agent=1., dt=1., history_length=4, max_real_agents=20, max_occl_agents=4, motion_constraints=motion_constraints, risk_param=self.risk_param_easier)
 
         self.policy = Policy(self.policy_params)
@@ -125,13 +128,19 @@ class FrenetVehicle(Vehicle):
         self.counter += 1
         if self.counter==self.control_freq:
             self.counter = 0
-            self.feed_state_to_policy_merging()
             try:
+                self.feed_state_to_policy_merging(self.policy)
                 new_acceleration = self.policy.get_helsinki_acceleration(v0=float(self.speed), a0=float(self.action['acceleration']), action=0)
             except:
                 new_acceleration = -100.
             if new_acceleration == -100.:
-                new_acceleration = self.policy_easier.get_helsinki_acceleration(v0=float(self.speed), a0=float(self.action['acceleration']), action=0)
+                if USE_EASIER_POLICY:
+                    print("Normal policy failed, trying to apply easier safety policy")
+                    self.feed_state_to_policy_merging(self.policy_easier)
+                    new_acceleration = self.policy_easier.get_helsinki_acceleration(v0=float(self.speed), a0=float(self.action['acceleration']), action=0)
+                else:
+                    raise ValueError('No Maneuver was Generated.')
+
             # print("Old acc: {}".format(self.action['acceleration']))
             # print("Helsinki acc: {}".format(new_acceleration))
             #acceleration = self.action['acceleration'] + dt*(new_acceleration-self.action['acceleration'])
@@ -246,25 +255,25 @@ class FrenetVehicle(Vehicle):
 
 
 
-    def feed_state_to_policy_merging(self):
+    def feed_state_to_policy_merging(self, policy):
         ego_s = self.road.get_ego_vehicle_distance()
         front_vehicles = self.road.get_front_vehicles()
         merging_vehicles = self.road.get_merging_vehicles()
-        self.policy.reset_situation()
+        policy.reset_situation()
         lane_to_stl_distance = 0.
         v_max_ego = self.road.get_vehicle_max_lane_speed(self)
         print("Max lane speed ego: {}".format(v_max_ego))
-        self.policy.update_speed_limit(v_max_ego)#assume ego lane speed limit is same as other lane speed limit
+        policy.update_speed_limit(v_max_ego)#assume ego lane speed limit is same as other lane speed limit
         v_max_lane_speed_other = 30.#Streight lane
-        lane_id=self.policy.add_lane_situation(ego_d=float(ego_s), ego_v=float(self.speed), v_max_lane=v_max_lane_speed_other, stl_d=lane_to_stl_distance)
+        lane_id=policy.add_lane_situation(ego_d=float(ego_s), ego_v=float(self.speed), v_max_lane=v_max_lane_speed_other, stl_d=lane_to_stl_distance)
         # #print("ego d: {} v: {}".format(ego_d, ego_v))
         i=0
         for merging_v in merging_vehicles:
-            self.policy.add_agent(agent_id=i, agent_d=merging_v[0], agent_v=float(merging_v[1]), lane_id=int(lane_id), occlusion_agent=False, merging_lane=True)
+            policy.add_agent(agent_id=i, agent_d=merging_v[0], agent_v=float(merging_v[1]), lane_id=int(lane_id), occlusion_agent=False, merging_lane=True)
             i +=1
         #
         for front_v in front_vehicles:
-            self.policy.add_front_agent(agent_id=i, agent_v=float(front_v[1]), v_max_lane=v_max_lane_speed_other, ego_d=front_v[0], ego_v=float(self.speed))
+            policy.add_front_agent(agent_id=i, agent_v=float(front_v[1]), v_max_lane=v_max_lane_speed_other, ego_d=front_v[0], ego_v=float(self.speed))
             i +=1
 
 
@@ -286,5 +295,5 @@ class FrenetVehicle(Vehicle):
         #             #print("Merging object at distance: {} v: {}".format(obj_d, cur_obs['other_cars']['velocities'][i][0]))
         #             self.policy.add_agent(agent_id=i, agent_d=obj_d, agent_v=float(abs(cur_obs['other_cars']['velocities'][i][0])), lane_id=int(lane_id), occlusion_agent=False, merging_lane=True)
         maximum_visible_distance = 500.
-        self.policy.add_agent(agent_id=-1, agent_d=abs(maximum_visible_distance), agent_v=v_max_ego, lane_id=int(lane_id), occlusion_agent=True, merging_lane=True)
+        policy.add_agent(agent_id=-1, agent_d=abs(maximum_visible_distance), agent_v=v_max_ego, lane_id=int(lane_id), occlusion_agent=True, merging_lane=True)
         return
