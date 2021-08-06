@@ -11,7 +11,9 @@ from highway_env.vehicle.objects import Obstacle
 from highway_env.utils import near_split
 
 START_DIS = 540
-END_DIS = 720
+END_DIS = 820
+START_SCENARIO = 111
+REAL_TIME = False
 class MergeEnv(AbstractEnv):
 
     """
@@ -92,12 +94,14 @@ class MergeEnv(AbstractEnv):
         super().__init__(self.config)
         self.seed(seed)
         np.random.seed(seed)
-        while self.scenario_counter!=1:
+        while self.scenario_counter!=START_SCENARIO:
             self._reset()
     def _cost(self, action: int) -> float:
         cost = 0.
         if self.vehicle.crashed:
             cost = 1.
+            raise ValueError('Collision happend')
+
         elif self.vehicle.position[0] > END_DIS and self.config["negative_cost"] is True:
             cost = -1.
         return cost
@@ -180,7 +184,7 @@ class MergeEnv(AbstractEnv):
             },
             "policy_frequency": 2,
             "duration": 70,
-            'real_time_rendering': False,
+            'real_time_rendering': REAL_TIME,
         })
         return config
 
