@@ -207,6 +207,7 @@ class DiscreteMetaAction(ActionType):
             return MDPVehicle
 
     def act(self, action: int) -> None:
+        print("H2 Action: {}".format(action))
         self.controlled_vehicle.act(self.actions[action])
 
 

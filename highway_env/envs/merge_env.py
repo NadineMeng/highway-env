@@ -11,8 +11,9 @@ from highway_env.vehicle.objects import Obstacle
 from highway_env.utils import near_split
 
 START_DIS = 540
-END_DIS = 820
-START_SCENARIO = 111
+END_DIS = 720#820
+START_SCENARIO = 1#90
+##INDEX for good changes between progressive and deffensive: 20, 15
 REAL_TIME = False
 class MergeEnv(AbstractEnv):
 
@@ -182,9 +183,10 @@ class MergeEnv(AbstractEnv):
                 "lateral": False,
                 "frenet" : False
             },
-            "policy_frequency": 2,
+            "policy_frequency": 10,
             "duration": 70,
             'real_time_rendering': REAL_TIME,
+            "record_path" : "/home/kamran/helsinki_dir/tmp/"
         })
         return config
 

@@ -5,7 +5,7 @@ import gym
 from gym import Wrapper
 from gym.utils import seeding
 import numpy as np
-
+from PIL import Image
 from highway_env import utils
 from highway_env.envs.common.action import action_factory, Action, DiscreteMetaAction, ActionType
 from highway_env.envs.common.observation import observation_factory, ObservationType
@@ -67,6 +67,11 @@ class AbstractEnv(gym.Env):
         self.should_update_rendering = True
         self.rendering_mode = 'human'
         self.enable_auto_render = False
+        self.img_counter = 1
+        os.makedirs(self.config["record_path"], exist_ok=True)
+        os.makedirs(self.config["record_path"] + "/agent", exist_ok=True)
+        os.makedirs(self.config["record_path"] + "/frenet", exist_ok=True)
+        os.makedirs(self.config["record_path"] + "/env", exist_ok=True)
 
         self.reset()
 
@@ -107,7 +112,8 @@ class AbstractEnv(gym.Env):
             "offscreen_rendering": os.environ.get("OFFSCREEN_RENDERING", "0") == "1",
             "manual_control": False,
             "real_time_rendering": False,
-            "force_render": True
+            "force_render": True,
+            "record_path": ""
         }
 
     def seed(self, seed: int = None) -> List[int]:
@@ -191,6 +197,7 @@ class AbstractEnv(gym.Env):
         self.should_update_rendering = True
         self._reset()
         self.define_spaces()  # Second, to link the obs and actions to the vehicles once the scene is created
+        self.img_counter = 1
         return self.observation_type.observe()
 
     def _reset(self) -> None:
@@ -268,6 +275,9 @@ class AbstractEnv(gym.Env):
             self.viewer.handle_events()
         if mode == 'rgb_array':
             image = self.viewer.get_image()
+            img = Image.fromarray(image)
+            img.save(self.config["record_path"] +"/env/frame_{:0>4d}.png".format(self.img_counter))
+            self.img_counter += 1
             return image
         self.should_update_rendering = False
 

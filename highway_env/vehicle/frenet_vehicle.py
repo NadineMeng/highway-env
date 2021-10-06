@@ -1,16 +1,16 @@
 from typing import List, Tuple, Union
 
 import numpy as np
+import os
 import copy
 from highway_env import utils
 from highway_env.road.road import Road, LaneIndex, Route
 from highway_env.types import Vector
 from highway_env.vehicle.kinematics import Vehicle
-from intersection_behavior import Policy, Action, PolicyParams, RiskParam, MotionConstraints
-
-
-USE_EASIER_POLICY = True
-
+from intersection_behavior import Policy, Action, PolicyParams, RiskParam, MotionConstraints, FrenetTrajectory, FrenetState
+from highway_env.trajectory_vis.visualizer import Visualizer
+USE_EASIER_POLICY = False
+SAVE_VIDEO = True
 class FrenetVehicle(Vehicle):
     """
     A vehicle piloted by two low-level controller, allowing high-level actions such as cruise control and lane changes.
@@ -33,7 +33,15 @@ class FrenetVehicle(Vehicle):
     KP_LATERAL = 1 / TAU_LATERAL  # [1/s]
     MAX_STEERING_ANGLE = np.pi / 3  # [rad]
     DELTA_SPEED = 5  # [m/s]
-
+    POLICY_DT = 0.25
+    SIM_DT = 0.05
+    MAX_ACC = 8.
+    DEC_LIMIT = 16.
+    MAX_JERK = 20.
+    MIN_JERK = -40.
+    MAX_SPEED = 30.
+    frenet_action = 0
+    COMFORT_JERK = 1.
     def __init__(self,
                  road: Road,
                  position: Vector,
@@ -42,26 +50,35 @@ class FrenetVehicle(Vehicle):
                  target_lane_index: LaneIndex = None,
                  target_speed: float = None,
                  route: Route = None):
+        self.frenet_action = 0
         super().__init__(road, position, heading, speed)
         self.target_lane_index = target_lane_index or self.lane_index
         self.target_speed = target_speed or self.speed
         self.route = route
 
         #Policy Interface for Frenet Planner
-        motion_constraints = MotionConstraints(speed_limit=30., acceleration_limit=4.,
-                                               deceleration_limit=8., max_jerk_limit=10., min_jerk_limit=-10.,comfort_jerk_limit=1.)
+        motion_constraints = MotionConstraints(speed_limit=self.MAX_SPEED, acceleration_limit=self.MAX_ACC,
+                                               deceleration_limit=self.DEC_LIMIT, max_jerk_limit=self.MAX_JERK, min_jerk_limit=self.MIN_JERK,comfort_jerk_limit=self.COMFORT_JERK)
 
         self.risk_param = RiskParam(veh_length=5.,veh_width=2., safety_distance=1.0, time_headway=0.)
         self.risk_param_easier = RiskParam(veh_length=5.,veh_width=2., safety_distance=0.5, time_headway=0.)
 
-        self.policy_params = PolicyParams(max_acc_agent=3., dt=1., history_length=4, max_real_agents=20, max_occl_agents=4, motion_constraints=motion_constraints, risk_param=self.risk_param)
-        self.policy_params_easier = PolicyParams(max_acc_agent=1., dt=1., history_length=4, max_real_agents=20, max_occl_agents=4, motion_constraints=motion_constraints, risk_param=self.risk_param_easier)
+        self.policy_params = PolicyParams(max_acc_agent=4., dt=self.POLICY_DT, history_length=4, max_real_agents=20, max_occl_agents=4, motion_constraints=motion_constraints, risk_param=self.risk_param)
+        self.policy_params_easier = PolicyParams(max_acc_agent=1., dt=self.POLICY_DT, history_length=4, max_real_agents=20, max_occl_agents=4, motion_constraints=motion_constraints, risk_param=self.risk_param_easier)
 
         self.policy = Policy(self.policy_params)
         self.policy_easier = Policy(self.policy_params_easier)
 
         self.control_freq=1
         self.counter = 0
+
+
+        if True:
+            record_path = "/home/kamran/helsinki_dir/tmp/"
+
+
+            self.vis = Visualizer(step_size = self.SIM_DT, hist_size = 100, controller=self, save_fig=SAVE_VIDEO, record_path=record_path)
+            vis_inp = {'q_values': None, 'attention_weights': None, 'action': None, 'alpha':None}
     @classmethod
     def create_from(cls, vehicle: "FrenetVehicle") -> "FrenetVehicle":
         """
@@ -103,6 +120,15 @@ class FrenetVehicle(Vehicle):
         :param action: a high-level action
         """
         self.follow_road()
+        if action is None:
+            return
+        print("action here in act: {}".format(action))
+        if action == "PROG":
+            self.frenet_action = 1
+        elif action == "DEF":
+            self.frenet_action = 0
+        else:
+            self.frenet_action = 1
         # if action == "FASTER":
         #     self.target_speed += self.DELTA_SPEED
         # elif action == "SLOWER":
@@ -121,30 +147,52 @@ class FrenetVehicle(Vehicle):
         # action = {"steering": self.steering_control(self.target_lane_index),
         #           "acceleration": -1}
         # action['steering'] = np.clip(action['steering'], -self.MAX_STEERING_ANGLE, self.MAX_STEERING_ANGLE)
-        # super().act(action)
+        super().act(self.action)
 
     def step(self, dt):
+        print("dt: {}".format(dt))
         self.follow_road()
         self.counter += 1
+        if self.frenet_action is None:
+            self.frenet_action = 0
         if self.counter==self.control_freq:
             self.counter = 0
-            try:
-                self.feed_state_to_policy_merging(self.policy)
-                new_acceleration = self.policy.get_helsinki_acceleration(v0=float(self.speed), a0=float(self.action['acceleration']), action=0)
-            except:
-                new_acceleration = -100.
-            if new_acceleration == -100.:
-                if USE_EASIER_POLICY:
-                    print("Normal policy failed, trying to apply easier safety policy")
-                    self.feed_state_to_policy_merging(self.policy_easier)
-                    new_acceleration = self.policy_easier.get_helsinki_acceleration(v0=float(self.speed), a0=float(self.action['acceleration']), action=0)
-                else:
-                    raise ValueError('No Maneuver was Generated.')
+            # try:
+            self.feed_state_to_policy_merging(self.policy)
+            #h_acceleration = self.policy.get_helsinki_acceleration(v0=float(self.speed), a0=float(self.action['acceleration']), action=ACTION)
+            frenet_trajectory_pr = self.policy.get_helsinki_trajectory(v0=float(self.speed), a0=float(self.action['acceleration']), action=1)
+            frenet_trajectory_def = self.policy.get_helsinki_trajectory(v0=float(self.speed), a0=float(self.action['acceleration']), action=0)
+            trajectoris = [frenet_trajectory_def, frenet_trajectory_pr]
+            h_acceleration = trajectoris[self.frenet_action].get_FState(1).s_dd
+            vis_inp = {'frenet_trajectories': trajectoris, 'vel_history': [self.speed], 'accl_history' : [self.action['acceleration']], 'jerk_history' : [h_acceleration - self.action['acceleration']]}
+            self.vis.visualize(vis_inp)
+            print("RL action: {}".format(self.frenet_action))
+            # # except:
+            # #     h_acceleration = -100.
+            # if h_acceleration == -100.:
+            #     if USE_EASIER_POLICY:
+            #         print("Normal policy failed, trying to apply easier safety policy")
+            #         self.feed_state_to_policy_merging(self.policy_easier)
+            #         h_acceleration = self.policy_easier.get_helsinki_acceleration(v0=float(self.speed), a0=float(self.action['acceleration']), action=ACTION)
+            #     else:
+            #         raise ValueError('No Maneuver was Generated.')
 
             # print("Old acc: {}".format(self.action['acceleration']))
             # print("Helsinki acc: {}".format(new_acceleration))
             #acceleration = self.action['acceleration'] + dt*(new_acceleration-self.action['acceleration'])
+
+            print("h_acceleration: {}".format(h_acceleration))
+
+            new_acceleration = h_acceleration#self.action['acceleration'] + (h_acceleration-self.action['acceleration'])*(self.SIM_DT/dt)
+            print("new_acceleration: {}".format(new_acceleration))
+
             new_acceleration = max(min((self.road.get_vehicle_max_lane_speed(self) - self.speed) / dt, new_acceleration), -self.speed / dt)
+
+            print("new acceleration cliped: {}".format(new_acceleration))
+
+            jerk = (new_acceleration - self.action['acceleration'])
+            if self.speed>1. and jerk<-0.5:
+                print("Jerk: *********************************************************************************************************************************************************** {}".format(jerk))
             action = {"steering": self.steering_control(self.target_lane_index),
                       "acceleration": new_acceleration}
             action['steering'] = np.clip(action['steering'], -self.MAX_STEERING_ANGLE, self.MAX_STEERING_ANGLE)
@@ -261,9 +309,9 @@ class FrenetVehicle(Vehicle):
         merging_vehicles = self.road.get_merging_vehicles()
         policy.reset_situation()
         lane_to_stl_distance = 0.
-        v_max_ego = self.road.get_vehicle_max_lane_speed(self)
-        print("Max lane speed ego: {}".format(v_max_ego))
-        policy.update_speed_limit(v_max_ego)#assume ego lane speed limit is same as other lane speed limit
+        #v_max_ego = self.road.get_vehicle_max_lane_speed(self)
+        #print("Max lane speed ego: {}".format(v_max_ego))
+        policy.update_speed_limit(self.MAX_SPEED)#assume ego lane speed limit is same as other lane speed limit
         v_max_lane_speed_other = 30.#Streight lane
         lane_id=policy.add_lane_situation(ego_d=float(ego_s), ego_v=float(self.speed), v_max_lane=v_max_lane_speed_other, stl_d=lane_to_stl_distance)
         # #print("ego d: {} v: {}".format(ego_d, ego_v))
@@ -295,5 +343,5 @@ class FrenetVehicle(Vehicle):
         #             #print("Merging object at distance: {} v: {}".format(obj_d, cur_obs['other_cars']['velocities'][i][0]))
         #             self.policy.add_agent(agent_id=i, agent_d=obj_d, agent_v=float(abs(cur_obs['other_cars']['velocities'][i][0])), lane_id=int(lane_id), occlusion_agent=False, merging_lane=True)
         maximum_visible_distance = 500.
-        policy.add_agent(agent_id=-1, agent_d=abs(maximum_visible_distance), agent_v=v_max_ego, lane_id=int(lane_id), occlusion_agent=True, merging_lane=True)
+        policy.add_agent(agent_id=-1, agent_d=abs(maximum_visible_distance), agent_v=self.MAX_SPEED, lane_id=int(lane_id), occlusion_agent=True, merging_lane=True)
         return
