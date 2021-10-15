@@ -6,6 +6,7 @@ from highway_env import utils
 from highway_env.road.road import Road, LaneIndex
 from highway_env.vehicle.objects import RoadObject, Obstacle, Landmark
 from highway_env.types import Vector
+from highway_env.trajectory_vis.visualizer import Visualizer
 
 
 class Vehicle(RoadObject):
@@ -36,10 +37,14 @@ class Vehicle(RoadObject):
                  speed: float = 0):
         super().__init__(road, position, heading, speed)
         self.action = {'steering': 0, 'acceleration': 0}
+        self.jerk = 0.
         self.crashed = False
         self.impact = None
         self.log = []
         self.history = deque(maxlen=30)
+        record_path = "/home/kamran/helsinki_dir/tmp/"
+        self.vis = Visualizer(hist_size = 100, controller=self, save_fig=True, record_path="/home/kamran/helsinki_dir/tmp/")
+
     @classmethod
     def make_on_lane(cls, road: Road, lane_index: LaneIndex, longitudinal: float, speed: float = 0) -> "Vehicle":
         """
@@ -116,6 +121,7 @@ class Vehicle(RoadObject):
         :param action: the input action
         """
         if action:
+            self.jerk = action['acceleration'] - self.action['acceleration']
             self.action = action
 
     def step(self, dt: float) -> None:
@@ -145,6 +151,13 @@ class Vehicle(RoadObject):
         self.heading += self.speed * np.sin(beta) / (self.LENGTH / 2) * dt
         self.speed += self.action['acceleration'] * dt
         self.on_state_update()
+
+
+    def save_image_veh_state(self, current_time, img_index):
+        vis_inp = {'time_history': [current_time], 'vel_history': [self.speed], 'accl_history' : [self.action['acceleration']], 'jerk_history' : [self.jerk], 'img_index': img_index}
+        print("Request to print")
+        self.vis.visualize(vis_inp)
+
 
     def clip_actions(self) -> None:
         if self.crashed:

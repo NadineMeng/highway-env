@@ -14,11 +14,11 @@ sns.set_palette('husl', 4)
 sns.set_context('paper', font_scale=0.8)
 class Visualizer(object):
     def __init__(
-            self, step_size, hist_size, controller, save_fig, record_path
+            self, hist_size, controller, save_fig, record_path
     ):
         self.plotters = [
             FrenetTrajectoryPlotter(controller, save_fig, record_path),
-            AgentPlotter(step_size, hist_size, controller, save_fig, record_path)]
+            AgentPlotter(hist_size, controller, save_fig, record_path)]
 
 
     def visualize(self, plotter_inp):
@@ -67,7 +67,7 @@ class FrenetTrajectoryPlotter(object):
         self.dt = 0.25
         self.colors = ["g", "r"]
         self.counter = 1
-    def draw(self, frenet_trajectories, **kwargs):
+    def draw(self, frenet_trajectories, img_index, **kwargs):
         self.fig, self.ax = plt.subplots(3, 1, figsize=[3.8, 3.0])
 
         for a in self.ax:
@@ -84,8 +84,8 @@ class FrenetTrajectoryPlotter(object):
         plt.draw()
         #plt.pause(1.)
         if self.save_fig:
-            plt.savefig(self.record_path + "/frenet/frame_{:0>4d}.png".format(self.counter), dpi=150)
-        self.counter+=1
+            plt.savefig(self.record_path + "/frenet/frame_{:0>4d}.png".format(img_index), dpi=150)
+        self.counter+=1#Todo remove it
         plt.close()
     def draw_ft(self, frenet_trajectory, color):
         #
@@ -116,21 +116,19 @@ class EnvPlotter(object):
 
 
 class AgentPlotter(object):
-    def __init__(self, step_size, hist_size, controller, save_fig, record_path):
+    def __init__(self, hist_size, controller, save_fig, record_path):
         self.save_fig = save_fig
         self.record_path = record_path
         self.controller = controller
-        self.step_size = step_size
         init_val = [0.] * hist_size
         self.vel = deque(init_val, maxlen=hist_size)
         self.acc = deque(init_val, maxlen=hist_size)
         self.jerk = deque(init_val, maxlen=hist_size)
-
-        self.time = [-i*self.step_size for i in reversed(range(hist_size))]
+        self.data_time = deque(init_val, maxlen=hist_size)
         self.counter=1
         #plt.ion()
         #plt.show()
-    def draw(self, vel_history, accl_history, jerk_history, **kwargs):
+    def draw(self, time_history, vel_history, accl_history, jerk_history, img_index, **kwargs):
         self.fig, self.ax = plt.subplots(3, 1, figsize=[3.8, 3.0], sharex=True)
 
 
@@ -139,7 +137,7 @@ class AgentPlotter(object):
         self.vel.extend(vel_history)
         self.acc.extend(accl_history)
         self.jerk.extend(jerk_history)
-
+        self.data_time.extend(time_history)
         st_time = r"$[s]$"
         st_jerk = r"$[m/s^3]$"
 
@@ -159,11 +157,11 @@ class AgentPlotter(object):
         # self.ax[1].tick_params(axis='both', which='major', labelsize=9)
         # self.ax[2].tick_params(axis='both', which='major', labelsize=9)
 
-        current_time_list = [x+self.counter*self.step_size for x in self.time]
+        #current_time_list = [x+self.counter*self.step_size for x in self.time]
 
-        self.ax[0].plot(current_time_list, self.vel, linewidth=2, color="g")
-        self.ax[1].plot(current_time_list, self.acc, linewidth=2, color="b")
-        self.ax[2].plot(current_time_list, self.jerk, linewidth=2, color="r")
+        self.ax[0].plot(self.data_time, self.vel, linewidth=2, color="g")
+        self.ax[1].plot(self.data_time, self.acc, linewidth=2, color="b")
+        self.ax[2].plot(self.data_time, self.jerk, linewidth=2, color="r")
 
         # self.ax[0].set_yticks([0,5,10])
         # self.ax[1].set_yticks([-8,0,4])
@@ -175,10 +173,10 @@ class AgentPlotter(object):
         plt.draw()
         #plt.pause(0.1)
         if self.save_fig:
-            plt.savefig(self.record_path +"/agent/frame_{:0>4d}.png".format(self.counter), dpi=150)
+            plt.savefig(self.record_path +"/agent/frame_{:0>4d}.png".format(img_index), dpi=150)
         # plt.savefig("/home/kamran/helsinki_data/tmp/agent/frame_{:0>4d}.svg".format(self.counter), dpi=150)
         # plt.close()
-        self.counter+=1
+        self.counter+=1#TODO remove it
         plt.close()
 
 class QValuePlotter(object):

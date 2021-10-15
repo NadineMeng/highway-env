@@ -102,6 +102,8 @@ class AbstractEnv(gym.Env):
             },
             "simulation_frequency": 15,  # [Hz]
             "policy_frequency": 1,  # [Hz]
+            "record_video": True,
+            "video_frames_skip": 3,  #skip frames of simulation (1 means no skip)
             "other_vehicles_type": "highway_env.vehicle.behavior.IDMVehicle",
             "screen_width": 600,  # [px]
             "screen_height": 150,  # [px]
@@ -247,6 +249,13 @@ class AbstractEnv(gym.Env):
             self.road.step(1 / self.config["simulation_frequency"])
             self.time += 1
 
+
+            if self.config["record_video"]:
+                if self.time % self.config["video_frames_skip"] == 0:
+                    #Ask each module to save its data as image
+                    self.road.save_img(self.time / self.config["simulation_frequency"], self.img_counter)
+                    self.save_env_img(self.img_counter)
+                    self.img_counter += 1
             # Automatically render intermediate simulation steps if a viewer has been launched
             # Ignored if the rendering is done offscreen
             self._automatic_rendering()
@@ -275,11 +284,15 @@ class AbstractEnv(gym.Env):
             self.viewer.handle_events()
         if mode == 'rgb_array':
             image = self.viewer.get_image()
-            img = Image.fromarray(image)
-            img.save(self.config["record_path"] +"/env/frame_{:0>4d}.png".format(self.img_counter))
-            self.img_counter += 1
             return image
         self.should_update_rendering = False
+
+    def save_env_img(self, img_index):
+        if self.viewer is None:
+            self.viewer = EnvViewer(self)
+        image = self.viewer.get_image()
+        img = Image.fromarray(image)
+        img.save(self.config["record_path"] +"/env/frame_{:0>4d}.png".format(img_index))
 
     def close(self) -> None:
         """

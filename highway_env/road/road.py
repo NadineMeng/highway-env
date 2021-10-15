@@ -329,6 +329,9 @@ class Road(object):
             for other in self.objects:
                 vehicle.check_collision(other, dt)
 
+    def save_img(self, current_time, img_index):
+        self.ego_vehicle.save_image_veh_state(current_time, img_index)
+
     def get_vehicle_max_lane_speed(self, vehicle):
         lane =  self.network.get_lane(vehicle.lane_index)
         return lane.speed_limit

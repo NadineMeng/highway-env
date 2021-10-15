@@ -9,6 +9,7 @@ from highway_env.vehicle.controller import ControlledVehicle
 from highway_env.vehicle.frenet_vehicle import FrenetVehicle
 from highway_env.vehicle.objects import Obstacle
 from highway_env.utils import near_split
+from highway_env.envs.common.action import action_factory, Action, DiscreteMetaAction, ActionType
 
 START_DIS = 540
 END_DIS = 720#820
@@ -42,8 +43,9 @@ class MergeEnv(AbstractEnv):
         self.config.update({"sample_vehicles_count": sample_vehicles_count,})
         self.config.update({"random_vehicles_count": random_vehicles_count,})
         self.config.update({"force_render": force_render,})
-        self.config.update({"policy_frequency": self.config["policy_frequency"]*frames_per_decision,})
+        self.config.update({"policy_frequency": self.config["policy_frequency"],})
 
+        self.frenet = frenet
         if frenet:
             self.config.update({
                 "action": {
@@ -54,6 +56,10 @@ class MergeEnv(AbstractEnv):
                 }
             })
             self.config.update({"simulation_frequency": 20})
+
+
+        #self.config.update({"video_frames_skip": self.config["simulation_frequency"]/self.config["policy_frequency"],})
+        self.config.update({"video_frames_skip": 500,})
 
 
         if observation == "GRID":
@@ -150,6 +156,11 @@ class MergeEnv(AbstractEnv):
         #    print("Terminal......................")
         return terminal
 
+    def step(self, action: Action):
+        #super().save_env_img()
+        #self.vehicle.save_image_veh_state()
+        return super().step(action)
+
     def _reset(self) -> None:
         # #high_speed
         if self.avg_speed == -1:
@@ -183,7 +194,7 @@ class MergeEnv(AbstractEnv):
                 "lateral": False,
                 "frenet" : False
             },
-            "policy_frequency": 10,
+            "policy_frequency": 2,
             "duration": 70,
             'real_time_rendering': REAL_TIME,
             "record_path" : "/home/kamran/helsinki_dir/tmp/"
@@ -242,10 +253,12 @@ class MergeEnv(AbstractEnv):
         ego_init_speed = np.random.uniform(10.,18.)
         ego_init_speed=19.#np.clip(ego_init_speed, 5., road.network.get_lane(("j", "k", 0)).speed_limit)
 
-
-        ego_vehicle = self.action_type.vehicle_class(road,
+        if self.frenet:
+            ego_vehicle = self.action_type.vehicle_class(road,
+                                                         road.network.get_lane(("j", "k", 0)).position(START_DIS, 0), speed=ego_init_speed, rec_video=True)
+        else:
+            ego_vehicle = self.action_type.vehicle_class(road,
                                                          road.network.get_lane(("j", "k", 0)).position(START_DIS, 0), speed=ego_init_speed)
-
 
 
 

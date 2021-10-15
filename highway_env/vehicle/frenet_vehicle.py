@@ -10,7 +10,6 @@ from highway_env.vehicle.kinematics import Vehicle
 from intersection_behavior import Policy, Action, PolicyParams, RiskParam, MotionConstraints, FrenetTrajectory, FrenetState
 from highway_env.trajectory_vis.visualizer import Visualizer
 USE_EASIER_POLICY = False
-SAVE_VIDEO = True
 class FrenetVehicle(Vehicle):
     """
     A vehicle piloted by two low-level controller, allowing high-level actions such as cruise control and lane changes.
@@ -47,6 +46,7 @@ class FrenetVehicle(Vehicle):
                  position: Vector,
                  heading: float = 0,
                  speed: float = 0,
+                 rec_video = False,
                  target_lane_index: LaneIndex = None,
                  target_speed: float = None,
                  route: Route = None):
@@ -70,14 +70,15 @@ class FrenetVehicle(Vehicle):
         self.policy_easier = Policy(self.policy_params_easier)
 
         self.control_freq=1
+        self.vis_freq = 2 * self.control_freq
         self.counter = 0
+        self.latest_trajectories = []
 
-
-        if True:
+        if rec_video:
             record_path = "/home/kamran/helsinki_dir/tmp/"
 
 
-            self.vis = Visualizer(step_size = self.SIM_DT, hist_size = 100, controller=self, save_fig=SAVE_VIDEO, record_path=record_path)
+            self.vis = Visualizer(hist_size = 100, controller=self, save_fig=rec_video, record_path=record_path)
             vis_inp = {'q_values': None, 'attention_weights': None, 'action': None, 'alpha':None}
     @classmethod
     def create_from(cls, vehicle: "FrenetVehicle") -> "FrenetVehicle":
@@ -155,8 +156,9 @@ class FrenetVehicle(Vehicle):
         self.counter += 1
         if self.frenet_action is None:
             self.frenet_action = 0
-        if self.counter==self.control_freq:
-            self.counter = 0
+        trajectoris = None
+        jerk = None
+        if self.counter%self.control_freq == 0:
             # try:
             self.feed_state_to_policy_merging(self.policy)
             #h_acceleration = self.policy.get_helsinki_acceleration(v0=float(self.speed), a0=float(self.action['acceleration']), action=ACTION)
@@ -164,8 +166,7 @@ class FrenetVehicle(Vehicle):
             frenet_trajectory_def = self.policy.get_helsinki_trajectory(v0=float(self.speed), a0=float(self.action['acceleration']), action=0)
             trajectoris = [frenet_trajectory_def, frenet_trajectory_pr]
             h_acceleration = trajectoris[self.frenet_action].get_FState(1).s_dd
-            vis_inp = {'frenet_trajectories': trajectoris, 'vel_history': [self.speed], 'accl_history' : [self.action['acceleration']], 'jerk_history' : [h_acceleration - self.action['acceleration']]}
-            self.vis.visualize(vis_inp)
+
             print("RL action: {}".format(self.frenet_action))
             # # except:
             # #     h_acceleration = -100.
@@ -197,7 +198,15 @@ class FrenetVehicle(Vehicle):
                       "acceleration": new_acceleration}
             action['steering'] = np.clip(action['steering'], -self.MAX_STEERING_ANGLE, self.MAX_STEERING_ANGLE)
             super().act(action)
+
+        self.latest_trajectories = trajectoris
+        self.jerk = jerk
         super().step(dt)
+
+    def save_image_veh_state(self, current_time, img_index):
+        self.counter = 0
+        vis_inp = {'frenet_trajectories': self.latest_trajectories, 'time_history': [current_time], 'vel_history': [self.speed], 'accl_history' : [self.action['acceleration']], 'jerk_history' : [self.jerk], 'img_index': img_index}
+        self.vis.visualize(vis_inp)
 
     def follow_road(self) -> None:
         """At the end of a lane, automatically switch to a next one."""
