@@ -16,6 +16,7 @@ END_DIS = 720#820
 START_SCENARIO = 1#90
 ##INDEX for good changes between progressive and deffensive: 20, 15
 REAL_TIME = False
+PRINT_LOG = False
 class MergeEnv(AbstractEnv):
 
     """
@@ -180,7 +181,8 @@ class MergeEnv(AbstractEnv):
 
         self._make_road()
         self._make_vehicles()
-        print("Scenario: {} Generated.".format(self.scenario_counter))
+        if PRINT_LOG:
+            print("Scenario: {} Generated.".format(self.scenario_counter))
         self.scenario_counter = self.scenario_counter + 1
 
     @classmethod
