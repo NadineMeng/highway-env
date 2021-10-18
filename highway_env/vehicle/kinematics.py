@@ -30,6 +30,9 @@ class Vehicle(RoadObject):
     MAX_SPEED = 40.
     """ Maximum reachable speed [m/s] """
     frenet_action = 0
+    """ Frenet policy sampling DT [s] """
+    POLICY_DT = None
+
     def __init__(self,
                  road: Road,
                  position: Vector,

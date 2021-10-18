@@ -64,7 +64,7 @@ class FrenetTrajectoryPlotter(object):
         matplotlib.pyplot.close("all")
         #plt.ion()
         #plt.show()
-        self.dt = 0.25
+        self.dt = controller.POLICY_DT
         self.colors = ["g", "r"]
         self.counter = 1
     def draw(self, frenet_trajectories, img_index, **kwargs):

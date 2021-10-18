@@ -102,7 +102,7 @@ class AbstractEnv(gym.Env):
             },
             "simulation_frequency": 15,  # [Hz]
             "policy_frequency": 1,  # [Hz]
-            "record_video": True,
+            "record_video": False,
             "video_frames_skip": 3,  #skip frames of simulation (1 means no skip)
             "other_vehicles_type": "highway_env.vehicle.behavior.IDMVehicle",
             "screen_width": 600,  # [px]

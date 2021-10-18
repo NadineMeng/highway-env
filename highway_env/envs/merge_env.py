@@ -32,7 +32,7 @@ class MergeEnv(AbstractEnv):
     MERGING_SPEED_REWARD: float = -0.5
     LANE_CHANGE_REWARD: float = -0.05
 
-    def __init__(self, avg_speed=-1, min_density=0., max_density=1., cooperative_prob=0., observation="LIST", negative_cost=False, sample_vehicles_count=0, random_vehicles_count=20, force_render=False, seed=123, frames_per_decision=1, frenet=False):
+    def __init__(self, avg_speed=-1, min_density=0., max_density=1., cooperative_prob=0., observation="LIST", negative_cost=False, sample_vehicles_count=0, random_vehicles_count=20, force_render=False, seed=123, frames_per_decision=1, frenet=False, record_video = False, video_frame_skip = 1):
         self.scenario_counter = 0
         self.avg_speed = avg_speed
         self.min_density = min_density,
@@ -59,7 +59,9 @@ class MergeEnv(AbstractEnv):
 
 
         #self.config.update({"video_frames_skip": self.config["simulation_frequency"]/self.config["policy_frequency"],})
-        self.config.update({"video_frames_skip": 500,})
+        if record_video:
+            self.config.update({"record_video": True})
+            self.config.update({"video_frames_skip": video_frame_skip,})
 
 
         if observation == "GRID":
