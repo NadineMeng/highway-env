@@ -5,7 +5,6 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
-from intersection_behavior import FrenetTrajectory
 
 plt.ioff()
 sns.set()

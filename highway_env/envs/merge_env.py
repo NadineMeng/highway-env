@@ -59,7 +59,6 @@ class MergeEnv(AbstractEnv):
             self.config.update({"simulation_frequency": 20})
 
 
-        #self.config.update({"video_frames_skip": self.config["simulation_frequency"]/self.config["policy_frequency"],})
         if record_video:
             self.config.update({"record_video": True})
             self.config.update({"video_frames_skip": video_frame_skip,})
