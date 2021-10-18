@@ -109,7 +109,8 @@ class MergeEnv(AbstractEnv):
         cost = 0.
         if self.vehicle.crashed:
             cost = 1.
-            raise ValueError('Collision happend')
+            if self.frenet:
+                raise ValueError('Collision happend')
 
         elif self.vehicle.position[0] > END_DIS and self.config["negative_cost"] is True:
             cost = -1.
