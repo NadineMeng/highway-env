@@ -100,7 +100,7 @@ class AbstractEnv(gym.Env):
             "action": {
                 "type": "DiscreteMetaAction"
             },
-            "simulation_frequency": 15,  # [Hz]
+            "simulation_frequency": 10,  # [Hz]
             "policy_frequency": 1,  # [Hz]
             "record_video": False,
             "video_frames_skip": 3,  #skip frames of simulation (1 means no skip)
