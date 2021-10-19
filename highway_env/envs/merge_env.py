@@ -11,8 +11,8 @@ from highway_env.vehicle.objects import Obstacle
 from highway_env.utils import near_split
 from highway_env.envs.common.action import action_factory, Action, DiscreteMetaAction, ActionType
 
-START_DIS = 540
-END_DIS = 720#820
+START_DIS = 540 + 450
+END_DIS = 720 + 450#820
 START_SCENARIO = 1#90
 ##INDEX for good changes between progressive and deffensive: 20, 15
 REAL_TIME = False
@@ -214,14 +214,14 @@ class MergeEnv(AbstractEnv):
         net = RoadNetwork()
 
         # Highway lanes
-        ends = [550, 80, 80, 150]  # Before, converging, merge, after
+        ends = [1000, 80, 80, 850]  # Before, converging, merge, after
         c, s, n = LineType.CONTINUOUS_LINE, LineType.STRIPED, LineType.NONE
         y = [0, StraightLane.DEFAULT_WIDTH]
         line_type = [[c, s], [n, c]]
         line_type_merge = [[c, s], [n, s]]
         for i in range(2):
-            net.add_lane("a", "b", StraightLane([0, y[i]], [350, y[i]], line_types=line_type[i]))
-            net.add_lane("b", "c", StraightLane([350, y[i]], [sum(ends[:2]), y[i]], line_types=line_type[i]))
+            net.add_lane("a", "b", StraightLane([0, y[i]], [150, y[i]], line_types=line_type[i]))
+            net.add_lane("b", "c", StraightLane([150, y[i]], [sum(ends[:2]), y[i]], line_types=line_type[i]))
             net.add_lane("c", "d", StraightLane([sum(ends[:2]), y[i]], [sum(ends[:3]), y[i]], line_types=line_type_merge[i]))
             net.add_lane("d", "e", StraightLane([sum(ends[:3]), y[i]], [sum(ends), y[i]], line_types=line_type[i]))
 
@@ -267,9 +267,10 @@ class MergeEnv(AbstractEnv):
 
 
         for _ in range(self.config["sample_vehicles_count"]):
-            lanes = np.arange(2)
-            lane_id = 1#self.road.np_random.choice(lanes, size=1).astype(int)[0]
-            lane = self.road.network.get_lane(("b", "c", lane_id))
+            lanes_ids = np.arange(2)
+            lane_id = self.road.np_random.choice(lanes_ids, size=1).astype(int)[0]
+            lanes = [self.road.network.get_lane(("b", "c", lane_id)), self.road.network.get_lane(("c", "d", lane_id))]
+            lane = self.road.np_random.choice(lanes, size=1)[0]
             distance_back = np.random.uniform(600, 620.)
             speed=np.random.normal(self.config["avg_speed"], 3.)
             speed=np.clip(speed, 5., lane.speed_limit)
@@ -337,6 +338,6 @@ register(
 register(
     id='mergesample-v0',
     entry_point='highway_env.envs:MergeEnv',
-    kwargs={'avg_speed' : 15, 'min_density' : 0.3, 'max_density' : 0.6, 'sample_vehicles_count' : 10, 'random_vehicles_count' : 0},
+    kwargs={'avg_speed' : 15, 'min_density' : 0.3, 'max_density' : 0.6, 'sample_vehicles_count' : 20, 'random_vehicles_count' : 0},
 )
 
