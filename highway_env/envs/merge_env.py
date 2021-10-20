@@ -33,14 +33,14 @@ class MergeEnv(AbstractEnv):
     MERGING_SPEED_REWARD: float = -0.5
     LANE_CHANGE_REWARD: float = -0.05
 
-    def __init__(self, avg_speed=-1, min_density=0., max_density=1., cooperative_prob=0., observation="LIST", negative_cost=False, sample_vehicles_count=0, random_vehicles_count=20, force_render=False, seed=123, frames_per_decision=1, frenet=False, record_video = False, video_frame_skip = 1):
+    def __init__(self, avg_speed=-1, min_density=0., max_density=1., cooperative_prob=0., observation="LIST", no_cost=False, sample_vehicles_count=0, random_vehicles_count=20, force_render=False, seed=123, frames_per_decision=1, frenet=False, record_video = False, video_frame_skip = 1):
         self.scenario_counter = 0
         self.avg_speed = avg_speed
         self.min_density = min_density,
         self.max_density = max_density
         self.config = self.default_config()
         self.config.update({"cooperative_prob": cooperative_prob,})
-        self.config.update({"negative_cost": negative_cost,})
+        self.config.update({"no_cost": no_cost,})
         self.config.update({"sample_vehicles_count": sample_vehicles_count,})
         self.config.update({"random_vehicles_count": random_vehicles_count,})
         self.config.update({"force_render": force_render,})
@@ -111,9 +111,6 @@ class MergeEnv(AbstractEnv):
             cost = 1.
             if self.frenet:
                 raise ValueError('Collision happend')
-
-        elif self.vehicle.position[0] > END_DIS and self.config["negative_cost"] is True:
-            cost = -1.
         return cost
 
 
@@ -147,8 +144,10 @@ class MergeEnv(AbstractEnv):
         #                   [0, 1])
         r = -0.001#Time penalty
 
-        if self.vehicle.position[0] > END_DIS and self.config["negative_cost"] is False:
+        if self.vehicle.position[0] > END_DIS:
             r = 0.01
+        if self.config["no_cost"] is True:
+            r -= self._cost(action)
         #print("Reward: {}".format(r))
         return r
 
@@ -191,7 +190,7 @@ class MergeEnv(AbstractEnv):
         config.update({
             "vehicles_density": 1,
             "cooperative_prob": 0.,
-            "negative_cost": False,
+            "no_cost": False,
             "action": {
                 "type": "DiscreteMetaAction",
                 "longitudinal": True,
