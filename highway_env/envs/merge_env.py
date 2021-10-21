@@ -33,7 +33,7 @@ class MergeEnv(AbstractEnv):
     MERGING_SPEED_REWARD: float = -0.5
     LANE_CHANGE_REWARD: float = -0.05
 
-    def __init__(self, avg_speed=-1, min_density=0., max_density=1., cooperative_prob=0., observation="LIST", no_cost=False, sample_vehicles_count=0, random_vehicles_count=20, force_render=False, seed=123, frames_per_decision=1, frenet=False, record_video = False, video_frame_skip = 1):
+    def __init__(self, avg_speed=-1, min_density=0., max_density=1., cooperative_prob=0., observation="LIST", no_cost=False, sample_vehicles_count=0, random_vehicles_count=20, force_render=False, seed=123, frames_per_decision=1, frenet=False, record_video = False, video_frame_skip = 1, max_ep_len=100):
         self.scenario_counter = 0
         self.avg_speed = avg_speed
         self.min_density = min_density,
@@ -45,6 +45,7 @@ class MergeEnv(AbstractEnv):
         self.config.update({"random_vehicles_count": random_vehicles_count,})
         self.config.update({"force_render": force_render,})
         self.config.update({"policy_frequency": self.config["policy_frequency"],})
+        self.config.update({"max_ep_len":max_ep_len,})
 
         self.frenet = frenet
         if frenet:
@@ -153,7 +154,7 @@ class MergeEnv(AbstractEnv):
 
     def _is_terminal(self) -> bool:
         """The episode is over when a collision occurs or when the access ramp has been passed."""
-        terminal = self.vehicle.crashed or self.vehicle.position[0] > END_DIS or self.road.any_crash
+        terminal = self.vehicle.crashed or self.vehicle.position[0] > END_DIS or self.road.any_crash or self.steps>self.config["max_ep_len"]
         #if terminal:
         #    print("Terminal......................")
         return terminal

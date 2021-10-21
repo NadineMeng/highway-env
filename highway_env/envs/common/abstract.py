@@ -115,7 +115,8 @@ class AbstractEnv(gym.Env):
             "manual_control": False,
             "real_time_rendering": False,
             "force_render": True,
-            "record_path": ""
+            "record_path": "",
+            "max_ep_length" : None
         }
 
     def seed(self, seed: int = None) -> List[int]:
