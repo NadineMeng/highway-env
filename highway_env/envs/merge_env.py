@@ -11,8 +11,9 @@ from highway_env.vehicle.objects import Obstacle
 from highway_env.utils import near_split
 from highway_env.envs.common.action import action_factory, Action, DiscreteMetaAction, ActionType
 
-START_DIS = 540 + 450
-END_DIS = 720 + 450#820
+
+START_DIS = 540 #+ 450
+END_DIS = 720 #+ 450
 START_SCENARIO = 1#90
 ##INDEX for good changes between progressive and deffensive: 20, 15
 REAL_TIME = False
@@ -155,6 +156,8 @@ class MergeEnv(AbstractEnv):
     def _is_terminal(self) -> bool:
         """The episode is over when a collision occurs or when the access ramp has been passed."""
         terminal = self.vehicle.crashed or self.vehicle.position[0] > END_DIS or self.road.any_crash or self.steps>self.config["max_ep_len"]
+        # if self.road.any_crash and self.vehicle.crashed == False:
+        #     print("Others Crash.....................")
         #if terminal:
         #    print("Terminal......................")
         return terminal
@@ -214,14 +217,14 @@ class MergeEnv(AbstractEnv):
         net = RoadNetwork()
 
         # Highway lanes
-        ends = [1000, 80, 80, 850]  # Before, converging, merge, after
+        ends = [550, 80, 80, 850]  # Before, converging, merge, after
         c, s, n = LineType.CONTINUOUS_LINE, LineType.STRIPED, LineType.NONE
         y = [0, StraightLane.DEFAULT_WIDTH]
         line_type = [[c, s], [n, c]]
         line_type_merge = [[c, s], [n, s]]
         for i in range(2):
-            net.add_lane("a", "b", StraightLane([0, y[i]], [150, y[i]], line_types=line_type[i]))
-            net.add_lane("b", "c", StraightLane([150, y[i]], [sum(ends[:2]), y[i]], line_types=line_type[i]))
+            net.add_lane("a", "b", StraightLane([0, y[i]], [250, y[i]], line_types=line_type[i]))
+            net.add_lane("b", "c", StraightLane([250, y[i]], [sum(ends[:2]), y[i]], line_types=line_type[i]))
             net.add_lane("c", "d", StraightLane([sum(ends[:2]), y[i]], [sum(ends[:3]), y[i]], line_types=line_type_merge[i]))
             net.add_lane("d", "e", StraightLane([sum(ends[:3]), y[i]], [sum(ends), y[i]], line_types=line_type[i]))
 
