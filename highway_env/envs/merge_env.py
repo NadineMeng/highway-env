@@ -87,7 +87,7 @@ class MergeEnv(AbstractEnv):
                 "observation": {
                     "type": "Kinematics",
                     "vehicles_count": 15,
-                    "features": ["presence", "x", "y", "vx", "vy", "cos_h", "sin_h"],
+                    "features": ["presence", "x", "y", "vx", "vy", "cos_h", "sin_h", "coop"],
                     "features_range": {
                         "x": [-1000, 1000],
                         "y": [-100, 100],
@@ -162,10 +162,11 @@ class MergeEnv(AbstractEnv):
         #    print("Terminal......................")
         return terminal
 
-    def step(self, action: Action):
-        #super().save_env_img()
-        #self.vehicle.save_image_veh_state()
-        return super().step(action)
+    # def step(self, action: Action):
+    #     #super().save_env_img()
+    #     #self.vehicle.save_image_veh_state()
+    #     observation, reward, terminal, info = super().step(action)
+    #     return observation, reward, terminal, info
 
     def _reset(self) -> None:
         # #high_speed
