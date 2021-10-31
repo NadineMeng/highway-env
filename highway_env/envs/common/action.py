@@ -6,7 +6,6 @@ from highway_env import utils
 from highway_env.vehicle.dynamics import BicycleVehicle
 from highway_env.vehicle.kinematics import Vehicle
 from highway_env.vehicle.controller import MDPVehicle
-from highway_env.vehicle.frenet_vehicle import FrenetVehicle
 
 if TYPE_CHECKING:
     from highway_env.envs.common.abstract import AbstractEnv
@@ -202,7 +201,7 @@ class DiscreteMetaAction(ActionType):
     @property
     def vehicle_class(self) -> Callable:
         if self.frenet:
-            return FrenetVehicle
+            raise ValueError("Not implemented")
         else:
             return MDPVehicle
 

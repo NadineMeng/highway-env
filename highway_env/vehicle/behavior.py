@@ -30,7 +30,7 @@ class IDMVehicle(ControlledVehicle):
     DISTANCE_WANTED = 5.0 + ControlledVehicle.LENGTH  # [m]
     """Desired jam distance to the front vehicle."""
 
-    TIME_WANTED = 1.  # [s]
+    TIME_WANTED = 0.2  # [s]
     """Desired time gap to the front vehicle."""
 
     DELTA = 4.0  # []

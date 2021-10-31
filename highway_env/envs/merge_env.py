@@ -6,7 +6,6 @@ from highway_env.envs.common.abstract import AbstractEnv
 from highway_env.road.lane import LineType, StraightLane, SineLane
 from highway_env.road.road import Road, RoadNetwork
 from highway_env.vehicle.controller import ControlledVehicle
-from highway_env.vehicle.frenet_vehicle import FrenetVehicle
 from highway_env.vehicle.objects import Obstacle
 from highway_env.utils import near_split
 from highway_env.envs.common.action import action_factory, Action, DiscreteMetaAction, ActionType
@@ -263,7 +262,7 @@ class MergeEnv(AbstractEnv):
         # road.vehicles.append(other_vehicles_type(road, road.network.get_lane(("a", "b", 0)).position(5, 0), speed=31.5))
         #Make init velocity of ego vehicle a random value
         ego_init_speed = np.random.uniform(10.,18.)
-        ego_init_speed=19.#np.clip(ego_init_speed, 5., road.network.get_lane(("j", "k", 0)).speed_limit)
+        ego_init_speed=10.#np.clip(ego_init_speed, 5., road.network.get_lane(("j", "k", 0)).speed_limit)
 
         if self.frenet:
             ego_vehicle = self.action_type.vehicle_class(road,
@@ -346,6 +345,6 @@ register(
 register(
     id='mergesample-v0',
     entry_point='highway_env.envs:MergeEnv',
-    kwargs={'avg_speed' : 15, 'min_density' : 0.3, 'max_density' : 0.6, 'sample_vehicles_count' : 20, 'random_vehicles_count' : 0},
+    kwargs={'avg_speed' : 20., 'min_density' : 1.5, 'max_density' : 2., 'sample_vehicles_count' : 20, 'random_vehicles_count' : 0, 'cooperative_prob': 0.3, 'observe_coop' : False},
 )
 
