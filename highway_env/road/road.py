@@ -398,7 +398,7 @@ class Road(object):
         s_front = s_rear = None
         v_front = v_rear = None
         for v in self.vehicles + self.objects:
-            if v is not vehicle and not isinstance(v, Landmark):  # self.network.is_connected_road(v.lane_index,
+            if v is not vehicle and v is not self.vehicles[-1] and not isinstance(v, Landmark):  # self.network.is_connected_road(v.lane_index,
                 # lane_index, same_lane=True):
                 s_v, lat_v = lane.local_coordinates(v.position)
                 if not lane.on_lane(v.position, s_v, lat_v, margin=1):
@@ -409,7 +409,7 @@ class Road(object):
                 if s_v < s and (s_rear is None or s_v > s_rear):
                     s_rear = s_v
                     v_rear = v
-        if consider_ego and self.ego_vehicle.position[0]>vehicle.position[0] and self.ego_vehicle.position[0]>CONFLICT_X-50.:
+        if ((consider_ego and self.ego_vehicle.position[0]>CONFLICT_X-50.) or (self.ego_vehicle.position[0]>CONFLICT_X+10)) and self.ego_vehicle.position[0]>vehicle.position[0]:
             if  v_front is None or self.ego_vehicle.position[0]<v_front.position[0]:
                 v_front = copy.deepcopy(self.ego_vehicle)
                 v_front.position[1] = vehicle.position[1]
