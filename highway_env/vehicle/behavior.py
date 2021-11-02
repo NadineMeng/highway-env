@@ -105,11 +105,9 @@ class IDMVehicle(ControlledVehicle):
         front_vehicle, rear_vehicle = self.road.neighbour_vehicles(self, self.lane_index, consider_ego)
         #ego_vehicle_distance = self.road.ego_vehicle_distance_to(self)
 
-        # if not self.cooperative and self.lane_index[2] == 1 and self.position[0]>CONFLICT_X-50.:
-        #     if np.random.uniform()<0.95:
-        #         print("before {}".format(self.target_speed))
-        #         self.target_speed = np.clip(self.target_speed + 5., 0., self.SPEED_MAX)
-        #         print("after {}".format(self.target_speed))
+        if not self.cooperative and self.lane_index[2] == 1 and CONFLICT_X-80.<self.position[0]<CONFLICT_X+10 and CONFLICT_X-50<self.road.ego_vehicle.position[0]<CONFLICT_X+10 and self.road.ego_vehicle.position[0]>= self.position[0]:
+            if np.random.uniform()<0.1:
+                self.target_speed = np.clip(self.target_speed + 1., 0., 20.)
 
 
         action['acceleration'] = self.acceleration(ego_vehicle=self,
