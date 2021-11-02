@@ -68,10 +68,11 @@ class AbstractEnv(gym.Env):
         self.rendering_mode = 'human'
         self.enable_auto_render = False
         self.img_counter = 1
-        os.makedirs(self.config["record_path"], exist_ok=True)
-        os.makedirs(self.config["record_path"] + "/agent", exist_ok=True)
-        os.makedirs(self.config["record_path"] + "/frenet", exist_ok=True)
-        os.makedirs(self.config["record_path"] + "/env", exist_ok=True)
+        if self.config["record_video"]:
+            os.makedirs(self.config["record_path"], exist_ok=True)
+            os.makedirs(self.config["record_path"] + "/agent", exist_ok=True)
+            os.makedirs(self.config["record_path"] + "/frenet", exist_ok=True)
+            os.makedirs(self.config["record_path"] + "/env", exist_ok=True)
 
         self.reset()
 
