@@ -8,6 +8,7 @@ from highway_env.vehicle.controller import ControlledVehicle
 from highway_env import utils
 from highway_env.vehicle.kinematics import Vehicle
 
+CONFLICT_X = 550 + 80
 
 class IDMVehicle(ControlledVehicle):
     """
@@ -18,19 +19,19 @@ class IDMVehicle(ControlledVehicle):
     """
 
     # Longitudinal policy parameters
-    ACC_MAX = 6.0  # [m/s2]
+    ACC_MAX = 3.0  # [m/s2]
     """Maximum acceleration."""
 
-    COMFORT_ACC_MAX = 3.0  # [m/s2]
+    COMFORT_ACC_MAX = 1.0  # [m/s2]
     """Desired maximum acceleration."""
 
-    COMFORT_ACC_MIN = -5.0  # [m/s2]
+    COMFORT_ACC_MIN = -1.  # [m/s2]
     """Desired maximum deceleration."""
 
     DISTANCE_WANTED = 5.0 + ControlledVehicle.LENGTH  # [m]
     """Desired jam distance to the front vehicle."""
 
-    TIME_WANTED = 0.2  # [s]
+    TIME_WANTED = 1.  # [s]
     """Desired time gap to the front vehicle."""
 
     DELTA = 4.0  # []
@@ -41,6 +42,7 @@ class IDMVehicle(ControlledVehicle):
     LANE_CHANGE_MIN_ACC_GAIN = 0.2  # [m/s2]
     LANE_CHANGE_MAX_BRAKING_IMPOSED = 2.0  # [m/s2]
     LANE_CHANGE_DELAY = 1.0  # [s]
+    SPEED_MAX = 30.#added by Danial
 
     def __init__(self,
                  road: Road,
@@ -57,6 +59,10 @@ class IDMVehicle(ControlledVehicle):
         self.enable_lane_change = enable_lane_change
         self.timer = timer or (np.sum(self.position)*np.pi) % self.LANE_CHANGE_DELAY
         self.cooperative = cooperative
+        # if cooperative:
+        #     self.ACC_MAX=20.
+        #     self.COMFORT_ACC_MIN = -0.5
+        #     self.TIME_WANTED = 0.5
     def randomize_behavior(self):
         pass
 
@@ -99,6 +105,11 @@ class IDMVehicle(ControlledVehicle):
         front_vehicle, rear_vehicle = self.road.neighbour_vehicles(self, self.lane_index, consider_ego)
         #ego_vehicle_distance = self.road.ego_vehicle_distance_to(self)
 
+        # if not self.cooperative and self.lane_index[2] == 1 and self.position[0]>CONFLICT_X-50.:
+        #     if np.random.uniform()<0.95:
+        #         print("before {}".format(self.target_speed))
+        #         self.target_speed = np.clip(self.target_speed + 5., 0., self.SPEED_MAX)
+        #         print("after {}".format(self.target_speed))
 
 
         action['acceleration'] = self.acceleration(ego_vehicle=self,

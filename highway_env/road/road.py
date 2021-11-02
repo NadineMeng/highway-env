@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 LaneIndex = Tuple[str, str, int]
 Route = List[LaneIndex]
-
+CONFLICT_X = 550 + 80
 
 class RoadNetwork(object):
     graph: Dict[str, Dict[str, List[AbstractLane]]]
@@ -324,10 +324,13 @@ class Road(object):
         for i, vehicle in enumerate(self.vehicles):
             for other in self.vehicles[i+1:]:
                 vehicle.check_collision(other, dt)
-                if vehicle.crashed:
+                if vehicle.crashed and vehicle.position[0]>self.ego_vehicle.position[0]:
                     self.any_crash = True
             for other in self.objects:
                 vehicle.check_collision(other, dt)
+            if vehicle.position[0]>760:
+                del self.vehicles[i]
+
 
     def save_img(self, current_time, img_index):
         self.ego_vehicle.save_image_veh_state(current_time, img_index)
@@ -406,7 +409,7 @@ class Road(object):
                 if s_v < s and (s_rear is None or s_v > s_rear):
                     s_rear = s_v
                     v_rear = v
-        if consider_ego and self.ego_vehicle.position[0]>vehicle.position[0]:
+        if consider_ego and self.ego_vehicle.position[0]>vehicle.position[0] and self.ego_vehicle.position[0]>CONFLICT_X-50.:
             if  v_front is None or self.ego_vehicle.position[0]<v_front.position[0]:
                 v_front = copy.deepcopy(self.ego_vehicle)
                 v_front.position[1] = vehicle.position[1]

@@ -147,13 +147,19 @@ class Vehicle(RoadObject):
                                    np.sin(self.heading + beta)])
 
 
-        self.position += v * dt + 0.5*a*dt*dt
+        self.position[0] = np.clip(self.position[0]+v[0] * dt + 0.5*a[0]*dt*dt, self.position[0], None )
+        self.position[1] = self.position[1]+v[1] * dt + 0.5*a[1]*dt*dt
+
         if self.impact is not None:
             self.position += self.impact
             self.crashed = True
             self.impact = None
         self.heading += self.speed * np.sin(beta) / (self.LENGTH / 2) * dt
         self.speed += self.action['acceleration'] * dt
+        if self.speed <= 0.:
+            self.speed = 0.
+
+
         self.on_state_update()
 
 

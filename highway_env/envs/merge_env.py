@@ -274,16 +274,19 @@ class MergeEnv(AbstractEnv):
 
 
         for _ in range(self.config["sample_vehicles_count"]):
-            lanes_ids = np.arange(2)
-            lane_id = self.road.np_random.choice(lanes_ids, size=1).astype(int)[0]
-            lanes = [self.road.network.get_lane(("b", "c", lane_id)), self.road.network.get_lane(("c", "d", lane_id))]
-            lane = self.road.np_random.choice(lanes, size=1)[0]
-            distance_back = np.random.uniform(600, 620.)
+            lane_id = 1
+            if np.random.uniform()<0.0:
+                lane_id = 0
+            start_end = ["b", "c"]
+            # if np.random.uniform()<0.99:
+            #     start_end = ["a", "b"]
+            #else:
+            #    start_end = ["b", "c"]
             speed=np.random.normal(self.config["avg_speed"], 3.)
-            speed=np.clip(speed, 5., lane.speed_limit)
+            speed=np.clip(speed, 5., other_vehicles_type.SPEED_MAX)
             sample_vehicle = other_vehicles_type.create_random(self.road,
-                                                            lane_from="b",
-                                                            lane_to="c",
+                                                            lane_from=start_end[0],
+                                                            lane_to=start_end[1],
                                                             lane_id=lane_id,
                                                             speed=speed,
                                                             spacing=1 / self.config["vehicles_density"],
@@ -345,6 +348,6 @@ register(
 register(
     id='mergesample-v0',
     entry_point='highway_env.envs:MergeEnv',
-    kwargs={'avg_speed' : 20., 'min_density' : 1.5, 'max_density' : 2., 'sample_vehicles_count' : 20, 'random_vehicles_count' : 0, 'cooperative_prob': 0.3, 'observe_coop' : False},
+    kwargs={'avg_speed' : 10., 'min_density' : 0.6, 'max_density' : 0.61, 'sample_vehicles_count' : 15, 'random_vehicles_count' : 0, 'cooperative_prob': 0.3, 'observe_coop' : False},
 )
 
