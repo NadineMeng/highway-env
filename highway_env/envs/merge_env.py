@@ -305,7 +305,7 @@ class MergeEnv(AbstractEnv):
             else:
                 lane = self.road.network.get_lane(("b", "c", lane_id))
             speed=np.random.normal(self.config["avg_speed"], 3.)
-            speed=np.clip(speed, 5., lane.speed_limit)
+            speed=np.clip(speed, 10., lane.speed_limit)
             cooperative = np.random.uniform()<self.config["cooperative_prob"]
             new_vehicle = other_vehicles_type.create_random(self.road,
                                                   lane_from="a",
@@ -348,6 +348,6 @@ register(
 register(
     id='mergesample-v0',
     entry_point='highway_env.envs:MergeEnv',
-    kwargs={'avg_speed' : 10., 'min_density' : 0.6, 'max_density' : 0.61, 'sample_vehicles_count' : 15, 'random_vehicles_count' : 0, 'cooperative_prob': 0.3, 'observe_coop' : False},
+    kwargs={'avg_speed' : 12., 'min_density' : 0.8, 'max_density' : 0.81, 'sample_vehicles_count' : 15, 'random_vehicles_count' : 0, 'cooperative_prob': 0.3, 'observe_coop' : False},
 )
 

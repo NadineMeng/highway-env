@@ -409,10 +409,18 @@ class Road(object):
                 if s_v < s and (s_rear is None or s_v > s_rear):
                     s_rear = s_v
                     v_rear = v
+
+        vehicle.COMFORT_ACC_MIN = -1.
+        vehicle.TIME_WANTED = 1.5
+
         if ((consider_ego and self.ego_vehicle.position[0]>CONFLICT_X-50.) or (self.ego_vehicle.position[0]>CONFLICT_X+10)) and self.ego_vehicle.position[0]>vehicle.position[0]:
             if  v_front is None or self.ego_vehicle.position[0]<v_front.position[0]:
                 v_front = copy.deepcopy(self.ego_vehicle)
                 v_front.position[1] = vehicle.position[1]
+                if self.ego_vehicle.position[0]<CONFLICT_X:
+                    vehicle.COMFORT_ACC_MIN = -3.
+                    vehicle.TIME_WANTED = 0.1
+
 
         return v_front, v_rear
 
