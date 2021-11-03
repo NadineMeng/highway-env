@@ -171,7 +171,9 @@ class VehicleGraphics(object):
         elif isinstance(vehicle, LinearVehicle):
             color = cls.YELLOW
         elif isinstance(vehicle, IDMVehicle):
-            if vehicle.cooperative:
+            if vehicle.performed_coop:
+                color = cls.RED
+            elif vehicle.cooperative:
                 color = cls.PURPLE
             else:
                 color = cls.BLUE

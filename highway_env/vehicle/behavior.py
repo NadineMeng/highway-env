@@ -28,7 +28,7 @@ class IDMVehicle(ControlledVehicle):
     COMFORT_ACC_MIN = -1.  # [m/s2]
     """Desired maximum deceleration."""
 
-    DISTANCE_WANTED = 1.0 + ControlledVehicle.LENGTH  # [m]
+    DISTANCE_WANTED = 2.0 + ControlledVehicle.LENGTH  # [m]
     """Desired jam distance to the front vehicle."""
 
     TIME_WANTED = 1.  # [s]
@@ -59,6 +59,7 @@ class IDMVehicle(ControlledVehicle):
         self.enable_lane_change = enable_lane_change
         self.timer = timer or (np.sum(self.position)*np.pi) % self.LANE_CHANGE_DELAY
         self.cooperative = cooperative
+        self.performed_coop = False
         # if cooperative:
         #     self.ACC_MAX=20.
         #     self.COMFORT_ACC_MIN = -3.

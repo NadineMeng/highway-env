@@ -40,6 +40,7 @@ class Vehicle(RoadObject):
                  speed: float = 0):
         super().__init__(road, position, heading, speed)
         self.cooperative = False
+        self.performed_coop = False
         self.action = {'steering': 0, 'acceleration': 0}
         self.jerk = 0.
         self.crashed = False
@@ -259,7 +260,7 @@ class Vehicle(RoadObject):
             'sin_h': self.direction[1],
             'cos_d': self.destination_direction[0],
             'sin_d': self.destination_direction[1],
-            'coop': self.cooperative
+            'coop': self.performed_coop
         }
         if not observe_intentions:
             d["cos_d"] = d["sin_d"] = 0

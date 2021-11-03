@@ -410,16 +410,27 @@ class Road(object):
                     s_rear = s_v
                     v_rear = v
 
+        vehicle.ACC_MAX = 3.
         vehicle.COMFORT_ACC_MIN = -1.
         vehicle.TIME_WANTED = 1.5
+        vehicle.performed_coop = False
 
-        if ((consider_ego and self.ego_vehicle.position[0]>CONFLICT_X-50.) or (self.ego_vehicle.position[0]>CONFLICT_X+10)) and self.ego_vehicle.position[0]>vehicle.position[0]:
+        #Consider ego only if it has passed the CZ
+        if self.ego_vehicle.position[0]>CONFLICT_X+10 and vehicle.position[0]<self.ego_vehicle.position[0]:
             if  v_front is None or self.ego_vehicle.position[0]<v_front.position[0]:
                 v_front = copy.deepcopy(self.ego_vehicle)
                 v_front.position[1] = vehicle.position[1]
-                if self.ego_vehicle.position[0]<CONFLICT_X:
-                    vehicle.COMFORT_ACC_MIN = -3.
-                    vehicle.TIME_WANTED = 0.1
+
+        #for cooperative cars
+        if consider_ego and self.ego_vehicle.position[0]>CONFLICT_X-50. and vehicle.position[0]<self.ego_vehicle.position[0]:
+            if  v_front is None or self.ego_vehicle.position[0]<v_front.position[0]:
+                v_front = copy.deepcopy(self.ego_vehicle)
+                v_front.position[1] = vehicle.position[1]
+                vehicle.performed_coop = True
+                if self.ego_vehicle.position[0]<CONFLICT_X:#if ego is behind CZ then
+                    vehicle.ACC_MAX = 0.75
+                    vehicle.COMFORT_ACC_MIN = -0.1
+                    vehicle.TIME_WANTED = 0.5
 
 
         return v_front, v_rear
