@@ -111,12 +111,11 @@ class MergeEnv(AbstractEnv):
             self._reset()
     def _cost(self, action: int) -> float:
         cost = 0.
-        if self.vehicle.crashed and  self.config["no_cost"] is False:
+        if self.vehicle.crashed:
             cost = 1.
             if self.frenet:
                 raise ValueError('Collision happend')
         return cost
-
 
 
     def _reward(self, action: int) -> float:
@@ -151,9 +150,9 @@ class MergeEnv(AbstractEnv):
 
         if self.vehicle.position[0] > END_DIS:
             r = 0.01
-        if self.config["no_cost"] is True and self.vehicle.crashed:
-            r -= 1.0
-        #print("Reward: {} Cost {}".format(r, self._cost(action)))
+        if self.config["no_cost"] is True:
+            r -= self._cost(action)
+        #print("Reward: {}".format(r))
         return r
 
     def _is_terminal(self) -> bool:
