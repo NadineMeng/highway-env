@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
+import copy
 
 plt.ioff()
 sns.set()
@@ -13,11 +14,11 @@ sns.set_palette('husl', 4)
 sns.set_context('paper', font_scale=0.8)
 class Visualizer(object):
     def __init__(
-            self, hist_size, controller, save_fig, record_path
+            self, hist_size, save_fig, record_path
     ):
         self.plotters = [
-            FrenetTrajectoryPlotter(controller, save_fig, record_path),
-            AgentPlotter(hist_size, controller, save_fig, record_path)]
+            #FrenetTrajectoryPlotter(controller, save_fig, record_path),
+            AgentPlotter(hist_size, save_fig, record_path)]
 
 
     def visualize(self, plotter_inp):
@@ -115,10 +116,10 @@ class EnvPlotter(object):
 
 
 class AgentPlotter(object):
-    def __init__(self, hist_size, controller, save_fig, record_path):
+    def __init__(self, hist_size, save_fig, record_path):
         self.save_fig = save_fig
         self.record_path = record_path
-        self.controller = controller
+        #self.controller = copy.deepcopy(controller)
         init_val = [0.] * hist_size
         self.vel = deque(init_val, maxlen=hist_size)
         self.acc = deque(init_val, maxlen=hist_size)
@@ -143,8 +144,8 @@ class AgentPlotter(object):
         st_acc = r"$[m/s^2]$"
         st_vel = r"$[m/s]$"
 
-        self.ax[0].set(ylim=(0, self.controller.MAX_SPEED + 1))
-        self.ax[1].set(ylim=(-self.controller.DEC_LIMIT, self.controller.MAX_ACC))
+        self.ax[0].set(ylim=(0, 15 + 1))
+        self.ax[1].set(ylim=(-5, 5))
         self.ax[2].set(ylim=(-12.0, 12.0))
 
         self.ax[0].set_ylabel("Velocity \n" + st_vel, fontsize=10)
