@@ -5,6 +5,8 @@ from typing import List, Tuple, Dict, TYPE_CHECKING, Optional
 from highway_env.road.lane import LineType, StraightLane, AbstractLane
 from highway_env.vehicle.objects import Landmark
 import copy
+from highway_env.trajectory_vis.visualizer import Visualizer
+from highway_env.vehicle.objects import RoadObject
 
 if TYPE_CHECKING:
     from highway_env.vehicle import kinematics, objects
@@ -290,11 +292,13 @@ class Road(object):
         self.record_history = record_history
         self.ego_vehicle = None
         self.any_crash = False
-
+        self.vis = None
 
     def append_ego_vehicle(self, ego_vehicle):
         self.ego_vehicle = ego_vehicle
         self.vehicles.append(ego_vehicle)
+        self.vis = Visualizer(hist_size = 100, save_fig=True, record_path="/home/kamran/helsinki_dir/tmp/")
+
     def close_vehicles_to(self, vehicle: 'kinematics.Vehicle', distance: float, count: int = None,
                           see_behind: bool = True) -> object:
         vehicles = [v for v in self.vehicles
@@ -333,7 +337,10 @@ class Road(object):
 
 
     def save_img(self, current_time, img_index):
-        self.ego_vehicle.save_image_veh_state(current_time, img_index)
+        vis_inp = {'time_history': [current_time], 'vel_history': [self.ego_vehicle.speed], 'accl_history' : [self.ego_vehicle.action['acceleration']], 'jerk_history' : [self.ego_vehicle.jerk], 'img_index': img_index}
+        print("Request to print")
+        self.vis.visualize(vis_inp)
+        #self.ego_vehicle.save_image_veh_state(current_time, img_index)
 
     def get_vehicle_max_lane_speed(self, vehicle):
         lane =  self.network.get_lane(vehicle.lane_index)
@@ -418,19 +425,23 @@ class Road(object):
         #Consider ego only if it has passed the CZ
         if self.ego_vehicle.position[0]>CONFLICT_X+10 and vehicle.position[0]<self.ego_vehicle.position[0]:
             if  v_front is None or self.ego_vehicle.position[0]<v_front.position[0]:
-                v_front = copy.deepcopy(self.ego_vehicle)
+                v_front = RoadObject(road=self, position = vehicle.position, speed = vehicle.speed, heading = vehicle.heading)
+                v_front.position[0] = self.ego_vehicle.position[0]
                 v_front.position[1] = vehicle.position[1]
 
         #for cooperative cars
         if consider_ego and self.ego_vehicle.position[0]>CONFLICT_X-50. and vehicle.position[0]<self.ego_vehicle.position[0]:
             if  v_front is None or self.ego_vehicle.position[0]<v_front.position[0]:
-                v_front = copy.deepcopy(self.ego_vehicle)
-                v_front.position[1] = vehicle.position[1]
+                v_front = RoadObject(road=self, position = vehicle.position, speed = vehicle.speed, heading = vehicle.heading)
+                v_front.position[0] = self.ego_vehicle.position[0]
                 vehicle.performed_coop = True
                 if self.ego_vehicle.position[0]<CONFLICT_X:#if ego is behind CZ then
                     vehicle.ACC_MAX = 0.75
                     vehicle.COMFORT_ACC_MIN = -0.1
                     vehicle.TIME_WANTED = 0.5
+                    # vehicle.ACC_MAX = 2.75
+                    # vehicle.COMFORT_ACC_MIN = -2.75
+                    # vehicle.TIME_WANTED = 0.0
 
 
         return v_front, v_rear
