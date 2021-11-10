@@ -297,31 +297,31 @@ class MergeEnv(AbstractEnv):
             self.road.vehicles.append(sample_vehicle)
 
 
-        for _ in range(self.config["random_vehicles_count"]):
-            lanes = np.arange(2)
-            lane_id = self.road.np_random.choice(lanes, size=1).astype(int)[0]
-            if np.random.uniform()<0.5:
-                lane = self.road.network.get_lane(("a", "b", lane_id))
-            else:
-                lane = self.road.network.get_lane(("b", "c", lane_id))
-            speed=np.random.normal(self.config["avg_speed"], 3.)
-            speed=np.clip(speed, 10., lane.speed_limit)
-            cooperative = np.random.uniform()<self.config["cooperative_prob"]
-            new_vehicle = other_vehicles_type.create_random(self.road,
-                                                  lane_from="a",
-                                                  lane_to="b",
-                                                  lane_id=lane_id,
-                                                  speed=speed,
-                                                  spacing=1 / self.config["vehicles_density"],
-                                                  cooperative=cooperative,
-                                                  )
+        # for _ in range(self.config["random_vehicles_count"]):
+        #     lanes = np.arange(2)
+        #     lane_id = self.road.np_random.choice(lanes, size=1).astype(int)[0]
+        #     if np.random.uniform()<0.5:
+        #         lane = self.road.network.get_lane(("a", "b", lane_id))
+        #     else:
+        #         lane = self.road.network.get_lane(("b", "c", lane_id))
+        #     speed=np.random.normal(self.config["avg_speed"], 3.)
+        #     speed=np.clip(speed, 10., lane.speed_limit)
+        #     cooperative = np.random.uniform()<self.config["cooperative_prob"]
+        #     new_vehicle = other_vehicles_type.create_random(self.road,
+        #                                           lane_from="a",
+        #                                           lane_to="b",
+        #                                           lane_id=lane_id,
+        #                                           speed=speed,
+        #                                           spacing=1 / self.config["vehicles_density"],
+        #                                           cooperative=cooperative,
+        #                                           )
 
 
             #
             #new_vehicle = other_vehicles_type.create_random(self.road, spacing=1 / self.config["vehicles_density"],
             #                                                speed=speed)
-            new_vehicle.enable_lane_change = False#np.random.random()<0.5
-            self.road.vehicles.append(new_vehicle)
+            # new_vehicle.enable_lane_change = False#np.random.random()<0.5
+            # self.road.vehicles.append(new_vehicle)
 
         #IMPORTANT: Ego vehicle should be added after others!
         road.append_ego_vehicle(ego_vehicle)
