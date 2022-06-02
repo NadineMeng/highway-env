@@ -1,4 +1,3 @@
-from turtle import speed
 import numpy as np
 from gym.envs.registration import register
 
@@ -9,31 +8,31 @@ from highway_env.road.road import Road, RoadNetwork
 from highway_env.vehicle.controller import ControlledVehicle
 from highway_env.vehicle.objects import Obstacle
 
-END_DISTANCE = 500.
-SPEED_LIMITS = [10., 30., 50., 70., 120.]#KpH
+END_DISTANCE = 450.
+SPEED_LIMITS = [7., 30., 50., 70., 120.]#KpH
 
-class ACCEnv(AbstractEnv):
+class ACCEnv1(AbstractEnv):
 
     """
     A highway merge negotiation environment.
+
     The ego-vehicle is driving on a highway and approached a merge, with some vehicles incoming on the access ramp.
     It is rewarded for maintaining a high speed and avoiding collisions, but also making room for merging
     vehicles.
     """
 
-    def __init__(self, speed_limit=-1):
+    def __init__(self,speed_limit=-1):
         if speed_limit == -1:
-            speed_limit = np.random.choice(SPEED_LIMITS) / 3.6 #m/s
-        print("Initializing ACC Env with Speed Limit: {}".format(speed_limit))
+            self.speed_limit = np.random.choice(SPEED_LIMITS) / 3.6 #m/s 
+        #print("Initializing ACC Env with Speed Limit: {}".format(self.speed_limit))
         super().__init__()
         self.config.update({
-            "speed_limit": speed_limit #m/s
+            "speed_limit": self.speed_limit #m/s
         })
         self.config["action"].update({
             "speed_range": [0, speed_limit]
         })    
-        self.config.update({"max_ep_len":200,})
-
+        self.config.update({"max_ep_len":1200,})
 
     @classmethod
     def default_config(cls) -> dict:
@@ -47,14 +46,13 @@ class ACCEnv(AbstractEnv):
                 "speed_range": [0, 30.]
             },
             "simulation_frequency": 15,  # [Hz]
-            "policy_frequency": 2,  # [Hz],
+            "policy_frequency": 10,  # [Hz],
             "speed_limit": 30. #m/s
         })
         cfg["action"].update({
             "speed_range": [0, cfg["speed_limit"]]
         })
         cfg["observation"].update({
-            "features":["presence","x","vx"],
             "vehicles_count": 2
         })
         return cfg
@@ -62,39 +60,44 @@ class ACCEnv(AbstractEnv):
     def _reward(self, action: int) -> float:
         """
         The vehicle is rewarded for driving with high speed on lanes to the right and avoiding collisions
+
         But an additional altruistic penalty is also suffered if any vehicle on the merging lane has a low speed.
+
         :param action: the action performed
         :return: the reward of the state-action transition
         """
-        reward = self.config["collision_reward"] * self.vehicle.crashed+self.config["time_reward"]#-abs(self.config["speed_limit"]-self.vehicle.speed)/self.config["speed_limit"]*0.001
-
+        reward = self.config["collision_reward"] * self.vehicle.crashed + self.config["time_reward"]
+        #0.01*self.vehicle.speed/self.speed_limit
+        #print('speed:',self.vehicle.speed)
+        #print('heading;',self.vehicle.heading)
         #if self.vehicle.crashed or self.vehicle.position[0] > END_DISTANCE:
         if self.vehicle.position[0] > END_DISTANCE:
             reward = reward + 0.2
             self.success=True
-        elif self.steps>self.config["max_ep_len"] and self.vehicle.position[0] <= END_DISTANCE:
-            reward=reward+(self.vehicle.position[0]-320)*0.001
-        #print(reward)
         return reward
 
     def _is_terminal(self) -> bool:
         """The episode is over when a collision occurs or when the access ramp has been passed."""
-        return self.vehicle.crashed or self.steps>self.config["max_ep_len"] or self.vehicle.position[0] > END_DISTANCE 
+        return self.vehicle.crashed or self.vehicle.position[0] > END_DISTANCE or self.steps>self.config["max_ep_len"]
 
     def _reset(self) -> None:
         self._make_road()
         self._make_vehicles()
         self.success=False
+        #print("Initializing ACC Env with Speed Limit: {}".format(self.speed_limit))
+        #print("Ego init speed: {} other speed: {}".format(self.ego_v, self.other_v))
+        
 
     def _make_road(self) -> None:
         """
         Make a road composed of a straight highway and a merging lane.
+
         :return: the road
         """
         net = RoadNetwork()
 
         # Highway lanes
-        ends = [150, 80, 80, 350]  # Before, converging, merge, after
+        ends = [150, 80, 80, 250]  # Before, converging, merge, after
         c, s, n = LineType.CONTINUOUS_LINE, LineType.STRIPED, LineType.NONE
         y = [0, StraightLane.DEFAULT_WIDTH]
         line_type = [[c, s], [n, c]]
@@ -121,27 +124,21 @@ class ACCEnv(AbstractEnv):
     def _make_vehicles(self) -> None:
         """
         Populate a road with several vehicles on the highway and on the merging lane, as well as an ego-vehicle.
+
         :return: the ego-vehicle
         """
         speed_limit = self.config["speed_limit"]
+        print('limit:',speed_limit)
+        print("Initializing ACC Env with Speed Limit: {}".format(speed_limit))
         ego_v = speed_limit * (np.random.normal() * 0.3 + 0.7)
-        #ego_v=speed_limit
-        #ego_v = speed_limit * ((-1+2*np.random.random() )* 0.3 + 0.7)
         ego_v = np.clip(ego_v, 0., speed_limit)
+        self.ego_v=ego_v
         other_v = speed_limit * (np.random.normal() * 0.3 + 0.7)
-        #other_v=0
-        #other_v = speed_limit * ((-1+2*np.random.random()) * 0.3 + 0.7)
-        other_v = np.clip(other_v, 0., speed_limit) 
-
-        #min_safe_distanse=speed_limit*speed_limit/14+6
-        if ego_v>other_v:
-            min_safe_distanse=(ego_v-other_v)*(ego_v-other_v)/14+6
-        else:
-            min_safe_distanse=20
-
+        other_v = np.clip(other_v, 0., speed_limit)   
+        self.other_v=other_v    
         
         ego_distance = 90
-        other_distance = ego_distance  +min_safe_distanse +np.random.uniform(0., 20.)
+        other_distance = ego_distance + 20. + np.random.uniform(0., 20.)
         road = self.road
         ego_vehicle = self.action_type.vehicle_class(road,
                                                      road.network.get_lane(("b", "c", 1)).position(ego_distance, 0),
@@ -149,7 +146,6 @@ class ACCEnv(AbstractEnv):
         road.vehicles.append(ego_vehicle)
 
         other_vehicles_type = utils.class_from_path(self.config["other_vehicles_type"])
-        #print('other_speed:',dir(other_vehicles_type).speed)
         road.vehicles.append(other_vehicles_type(road, road.network.get_lane(("b", "c", 1)).position(other_distance, 0), speed=other_v, target_speed = speed_limit))
         #road.vehicles.append(other_vehicles_type(road, road.network.get_lane(("a", "b", 1)).position(70, 0), speed=31))
         #road.vehicles.append(other_vehicles_type(road, road.network.get_lane(("a", "b", 0)).position(5, 0), speed=31.5))
@@ -157,12 +153,27 @@ class ACCEnv(AbstractEnv):
         # merging_v = other_vehicles_type(road, road.network.get_lane(("j", "k", 0)).position(110, 0), speed=20)
         # merging_v.target_speed = 30
         # road.vehicles.append(merging_v)
+        
+        
+        
         print("Ego init speed: {} other speed: {}".format(ego_v, other_v))
         self.vehicle = ego_vehicle
-        #print(self.vehicle.position[0])
+    
+    def set_task(self, task):
+        speed_limit=task['speed_limit']
+        self.config.update({
+            "speed_limit": speed_limit #m/s
+        })
+
+    
+    def sample_tasks(self, num_tasks):
+        tasks=[]
+        speed_limits = np.random.choice((SPEED_LIMITS), (num_tasks,))/ 3.6 
+        tasks = [{'speed_limit': speed_limit} for speed_limit in speed_limits]
+        return tasks
 
 
 register(
-    id='acc-v0',
-    entry_point='highway_env.envs:ACCEnv'
+    id='acc-v1',
+    entry_point='highway_env.envs:ACCEnv1'
 )
