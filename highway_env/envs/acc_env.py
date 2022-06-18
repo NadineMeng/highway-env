@@ -10,7 +10,8 @@ from highway_env.vehicle.controller import ControlledVehicle
 from highway_env.vehicle.objects import Obstacle
 
 END_DISTANCE = 500.
-SPEED_LIMITS = [10., 30., 50., 70., 120.]#KpH
+SPEED_LIMITS = [120.]#KpH
+TARGET_SPEED=[10., 30., 50., 70., 120.]#KpH
 
 class ACCEnv(AbstractEnv):
 
@@ -21,18 +22,22 @@ class ACCEnv(AbstractEnv):
     vehicles.
     """
 
-    def __init__(self, speed_limit=-1):
-        if speed_limit == -1:
-            speed_limit = np.random.choice(SPEED_LIMITS) / 3.6 #m/s
-        print("Initializing ACC Env with Speed Limit: {}".format(speed_limit))
+    def __init__(self, target_speed=-1,speed_limit=120):
+        if target_speed == -1:
+            self.target_speed = np.random.choice(TARGET_SPEED) / 3.6 #m/s
+        else:
+            self.target_speed=target_speed/3.6
+        self.speed_limit=speed_limit/3.6
+        print("Initializing ACC Env with Speed Limit: {}".format(self.speed_limit))
         super().__init__()
+        
         self.config.update({
-            "speed_limit": speed_limit #m/s
+            "speed_limit": self.speed_limit #m/s
         })
         self.config["action"].update({
-            "speed_range": [0, speed_limit]
+            "speed_range": [0, self.speed_limit]
         })    
-        self.config.update({"max_ep_len":200,})
+        self.config.update({"max_ep_len":230})
 
 
     @classmethod
@@ -40,7 +45,7 @@ class ACCEnv(AbstractEnv):
         cfg = super().default_config()
         cfg.update({
             "collision_reward": -1,
-            "time_reward": -0.001,
+            "time_reward": -0.001,#-4e-5,#
              "action": {
                 "type": "ContinuousAction",
                 "lateral": False,
@@ -54,8 +59,8 @@ class ACCEnv(AbstractEnv):
             "speed_range": [0, cfg["speed_limit"]]
         })
         cfg["observation"].update({
-            "features":["presence","x","vx"],
-            "vehicles_count": 2
+            #"features":["presence","x","vx"],
+            "vehicles_count": 2,
         })
         return cfg
 
@@ -66,14 +71,15 @@ class ACCEnv(AbstractEnv):
         :param action: the action performed
         :return: the reward of the state-action transition
         """
-        reward = self.config["collision_reward"] * self.vehicle.crashed+self.config["time_reward"]#-abs(self.config["speed_limit"]-self.vehicle.speed)/self.config["speed_limit"]*0.001
-
+        reward = self.config["collision_reward"] * self.vehicle.crashed+self.config["time_reward"]#*(self.target_speed+6)#+self.vehicle.speed*0.01#
+        #print(abs(self.vehicle.speed-self.target_speed)/self.target_speed)
         #if self.vehicle.crashed or self.vehicle.position[0] > END_DISTANCE:
-        if self.vehicle.position[0] > END_DISTANCE:
-            reward = reward + 0.2
+        if self.vehicle.position[0] >= END_DISTANCE:
+            reward = reward + 0.7
             self.success=True
-        elif self.steps>self.config["max_ep_len"] and self.vehicle.position[0] <= END_DISTANCE:
+        elif self.steps>self.config["max_ep_len"]:
             reward=reward+(self.vehicle.position[0]-320)*0.001
+        #    print('abstad_reward:',(self.vehicle.position[0]-320)*0.001)
         #print(reward)
         return reward
 
@@ -125,23 +131,24 @@ class ACCEnv(AbstractEnv):
         """
         speed_limit = self.config["speed_limit"]
         ego_v = speed_limit * (np.random.normal() * 0.3 + 0.7)
-        #ego_v=speed_limit
-        #ego_v = speed_limit * ((-1+2*np.random.random() )* 0.3 + 0.7)
         ego_v = np.clip(ego_v, 0., speed_limit)
+        #ego_v=speed_limit*np.random.uniform()
         other_v = speed_limit * (np.random.normal() * 0.3 + 0.7)
-        #other_v=0
-        #other_v = speed_limit * ((-1+2*np.random.random()) * 0.3 + 0.7)
-        other_v = np.clip(other_v, 0., speed_limit) 
-
+        other_v = np.clip(other_v, 0., speed_limit)
+        #other_v=speed_limit*np.random.uniform()
+        #self.target_speed=0 
+        
         #min_safe_distanse=speed_limit*speed_limit/14+6
-        if ego_v>other_v:
-            min_safe_distanse=(ego_v-other_v)*(ego_v-other_v)/14+6
+        if ego_v>=other_v:
+            #min_safe_distanse=np.power(ego_v-other_v,2)/13+np.power(other_v-self.target_speed,2)/15+np.power(ego_v-self.target_speed,2)/15+8
+            min_safe_distanse=np.power(ego_v-other_v,2)/13+np.clip(other_v-self.target_speed,0,speed_limit)*1.2+np.clip(ego_v-self.target_speed,0,speed_limit)*1.5+8
+            
         else:
-            min_safe_distanse=20
+            min_safe_distanse=25
 
         
         ego_distance = 90
-        other_distance = ego_distance  +min_safe_distanse +np.random.uniform(0., 20.)
+        other_distance = ego_distance  +min_safe_distanse #+np.random.uniform(0., 20.)
         road = self.road
         ego_vehicle = self.action_type.vehicle_class(road,
                                                      road.network.get_lane(("b", "c", 1)).position(ego_distance, 0),
@@ -149,15 +156,8 @@ class ACCEnv(AbstractEnv):
         road.vehicles.append(ego_vehicle)
 
         other_vehicles_type = utils.class_from_path(self.config["other_vehicles_type"])
-        #print('other_speed:',dir(other_vehicles_type).speed)
-        road.vehicles.append(other_vehicles_type(road, road.network.get_lane(("b", "c", 1)).position(other_distance, 0), speed=other_v, target_speed = speed_limit))
-        #road.vehicles.append(other_vehicles_type(road, road.network.get_lane(("a", "b", 1)).position(70, 0), speed=31))
-        #road.vehicles.append(other_vehicles_type(road, road.network.get_lane(("a", "b", 0)).position(5, 0), speed=31.5))
-
-        # merging_v = other_vehicles_type(road, road.network.get_lane(("j", "k", 0)).position(110, 0), speed=20)
-        # merging_v.target_speed = 30
-        # road.vehicles.append(merging_v)
-        print("Ego init speed: {} other speed: {}".format(ego_v, other_v))
+        road.vehicles.append(other_vehicles_type(road, road.network.get_lane(("b", "c", 1)).position(other_distance, 0), speed=other_v, target_speed = self.target_speed))
+        print("Ego init speed: {} other speed: {} target speed:{}".format(ego_v, other_v,self.target_speed))
         self.vehicle = ego_vehicle
         #print(self.vehicle.position[0])
 

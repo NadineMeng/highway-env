@@ -10,4 +10,4 @@ from highway_env.envs.u_turn_env import *
 from highway_env.envs.exit_env import *
 from highway_env.envs.racetrack_env import *
 from highway_env.envs.acc_env import *
-from highway_env.envs.acc_env_ch import *
+#from highway_env.envs.acc_env_ch import *
