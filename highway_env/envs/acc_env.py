@@ -37,7 +37,7 @@ class ACCEnv(AbstractEnv):
         self.config["action"].update({
             "speed_range": [0, self.speed_limit]
         })    
-        self.config.update({"max_ep_len":30})
+        self.config.update({"max_ep_len":230})
 
 
     @classmethod
