@@ -37,7 +37,7 @@ class ACCEnv(AbstractEnv):
         self.config["action"].update({
             "speed_range": [0, self.speed_limit]
         })    
-        self.config.update({"max_ep_len":230})
+        self.config.update({"max_ep_len":30})
 
 
     @classmethod
@@ -140,15 +140,15 @@ class ACCEnv(AbstractEnv):
         
         #min_safe_distanse=speed_limit*speed_limit/14+6
         if ego_v>=other_v:
-            #min_safe_distanse=np.power(ego_v-other_v,2)/13+np.power(other_v-self.target_speed,2)/15+np.power(ego_v-self.target_speed,2)/15+8
-            min_safe_distanse=np.power(ego_v-other_v,2)/13+np.clip(other_v-self.target_speed,0,speed_limit)*1.2+np.clip(ego_v-self.target_speed,0,speed_limit)*1.5+8
+            min_safe_distanse=np.power(ego_v-other_v,2)/12+np.power(other_v-self.target_speed,2)/14+np.power(ego_v-self.target_speed,2)/15+5
+            #min_safe_distanse=np.power(ego_v-other_v,2)/13+np.clip(other_v-self.target_speed,0,speed_limit)*1.2+np.clip(ego_v-self.target_speed,0,speed_limit)*1.5+8
             
         else:
             min_safe_distanse=25
 
         
         ego_distance = 90
-        other_distance = ego_distance  +min_safe_distanse #+np.random.uniform(0., 20.)
+        other_distance = ego_distance  +min_safe_distanse +np.random.uniform(0., 20.)
         road = self.road
         ego_vehicle = self.action_type.vehicle_class(road,
                                                      road.network.get_lane(("b", "c", 1)).position(ego_distance, 0),
