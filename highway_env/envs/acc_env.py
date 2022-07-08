@@ -11,7 +11,7 @@ from highway_env.vehicle.objects import Obstacle
 
 END_DISTANCE = 500.
 SPEED_LIMITS = [120.]#KpH
-TARGET_SPEED=[10., 30., 50., 70., 120.]#KpH
+TARGET_SPEED=[10., 30., 50., 70., 100.,120.]#KpH
 
 class ACCEnv(AbstractEnv):
 
@@ -75,7 +75,7 @@ class ACCEnv(AbstractEnv):
         #print(abs(self.vehicle.speed-self.target_speed)/self.target_speed)
         #if self.vehicle.crashed or self.vehicle.position[0] > END_DISTANCE:
         if self.vehicle.position[0] >= END_DISTANCE:
-            reward = reward + 0.7
+            reward = reward + 0.5
             self.success=True
         elif self.steps>self.config["max_ep_len"]:
             reward=reward+(self.vehicle.position[0]-320)*0.001
@@ -141,18 +141,30 @@ class ACCEnv(AbstractEnv):
         #min_safe_distanse=speed_limit*speed_limit/14+6
         if ego_v>=other_v:
             # ####
-            min_safe_distanse=np.power(ego_v-other_v,2)/13+np.power(other_v-self.target_speed,2)/15+np.power(ego_v-self.target_speed,2)/15+5
+            #min_safe_distanse=np.power(ego_v-other_v,2)/13+np.power(other_v-self.target_speed,2)/15+np.power(ego_v-self.target_speed,2)/15+7
             #### new_env
             #min_safe_distanse=np.power(ego_v-other_v,2)/13+np.clip(other_v-self.target_speed,0,speed_limit)*1.2+np.clip(ego_v-self.target_speed,0,speed_limit)*1.5+8
             #new_new_env
             #min_safe_distanse=np.power(ego_v-other_v,2)/12+np.power(other_v-self.target_speed,2)/14+np.power(ego_v-self.target_speed,2)/15+5
+            # env 5
+            #min_safe_distanse=np.power(ego_v-other_v,2)/14+np.power(other_v-self.target_speed,2)/14+np.power(ego_v-self.target_speed,2)/14+2
+            # env 6
+            #min_safe_distanse=np.power(ego_v-other_v,2)/13+np.power(other_v-self.target_speed,2)/13+np.power(ego_v-self.target_speed,2)/13
+            # env 7
+            #min_safe_distanse=np.power(ego_v-other_v,2)/13+np.power(other_v-self.target_speed,2)/13+np.power(ego_v-self.target_speed,2)/13+5
+            #env 8
+            #min_safe_distanse=np.power(ego_v-other_v,2)/5+np.power(other_v-self.target_speed,2)/10+10+np.random.uniform(0., 20.)
+            #env 9
+            min_safe_distanse=np.power(ego_v-other_v,2)/4+np.power(other_v-self.target_speed,2)/10+8+np.random.uniform(0., 10.)
+            
+            
             
         else:
-            min_safe_distanse=25
+            min_safe_distanse=20#25
 
         
         ego_distance = 90
-        other_distance = ego_distance  +min_safe_distanse +np.random.uniform(0., 20.)
+        other_distance = ego_distance  +min_safe_distanse #+np.random.uniform(0., 20.)
         road = self.road
         ego_vehicle = self.action_type.vehicle_class(road,
                                                      road.network.get_lane(("b", "c", 1)).position(ego_distance, 0),
