@@ -59,7 +59,7 @@ class ACCEnv(AbstractEnv):
             "speed_range": [0, cfg["speed_limit"]]
         })
         cfg["observation"].update({
-            #"features":["presence","x","vx"],
+            "features":["presence","x","vx"],
             "vehicles_count": 2,
         })
         return cfg
