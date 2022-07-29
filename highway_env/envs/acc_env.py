@@ -140,21 +140,6 @@ class ACCEnv(AbstractEnv):
         
         #min_safe_distanse=speed_limit*speed_limit/14+6
         if ego_v>=other_v:
-            # ####
-            #min_safe_distanse=np.power(ego_v-other_v,2)/13+np.power(other_v-self.target_speed,2)/15+np.power(ego_v-self.target_speed,2)/15+7
-            #### new_env
-            #min_safe_distanse=np.power(ego_v-other_v,2)/13+np.clip(other_v-self.target_speed,0,speed_limit)*1.2+np.clip(ego_v-self.target_speed,0,speed_limit)*1.5+8
-            #new_new_env
-            #min_safe_distanse=np.power(ego_v-other_v,2)/12+np.power(other_v-self.target_speed,2)/14+np.power(ego_v-self.target_speed,2)/15+5
-            # env 5
-            #min_safe_distanse=np.power(ego_v-other_v,2)/14+np.power(other_v-self.target_speed,2)/14+np.power(ego_v-self.target_speed,2)/14+2
-            # env 6
-            #min_safe_distanse=np.power(ego_v-other_v,2)/13+np.power(other_v-self.target_speed,2)/13+np.power(ego_v-self.target_speed,2)/13
-            # env 7
-            #min_safe_distanse=np.power(ego_v-other_v,2)/13+np.power(other_v-self.target_speed,2)/13+np.power(ego_v-self.target_speed,2)/13+5
-            #env 8
-            #min_safe_distanse=np.power(ego_v-other_v,2)/5+np.power(other_v-self.target_speed,2)/10+10+np.random.uniform(0., 20.)
-            #env 9
             min_safe_distanse=np.power(ego_v-other_v,2)/4+np.power(other_v-self.target_speed,2)/10+8+np.random.uniform(0., 10.)
             
             
